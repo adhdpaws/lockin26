@@ -12,6 +12,7 @@ import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
+import { useAI } from '../../contexts/AIContext';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -22,12 +23,15 @@ export default function Dashboard() {
   const [activeMilestone, setActiveMilestone] = useState<Milestone | undefined>(undefined);
   const [milestoneStack, setMilestoneStack] = useState<Milestone[]>([]);
 
+  const { generate, isReady } = useAI();
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const loadData = async () => {
     const savedGoal = await AsyncStorage.getItem('mainGoal');
     const savedMotivation = await AsyncStorage.getItem('motivation');
     const savedActive = await AsyncStorage.getItem('activeMilestone');
     const savedStack = await AsyncStorage.getItem('milestoneStack');
-    
+
     if (savedGoal) setGoal(savedGoal);
     if (savedMotivation) setMotivation(savedMotivation);
     if (savedActive) setActiveMilestone(JSON.parse(savedActive));
@@ -46,19 +50,80 @@ export default function Dashboard() {
     setRefreshing(false);
   }, []);
 
+  const generateBattlePlan = async (currentGoal: string, currentMotivation: string) => {
+    if (isGenerating || !isReady) return;
+    setIsGenerating(true);
+
+    try {
+      const prompt = `You are a strategic planning AI. The user has a goal: "${currentGoal}". Motivation: "${currentMotivation}". 
+      Create a tactical plan with 5 distinct, sequential milestones to achieve this goal. 
+      Return ONLY a raw JSON array. No markdown, no code blocks. 
+      Each object must have: 
+      - title (string)
+      - description (string)
+      - deadline (calculated relative to now, format YYYY-MM-DD)
+      - impact ('HIGH' or 'CRITICAL')
+      - tasks (array of strings, 3-5 actionable steps per milestone)
+      
+      Example format:
+      [{"title": "...", "description": "...", "deadline": "2024-01-01", "impact": "HIGH", "tasks": ["step 1", "step 2"]}]`;
+
+      const response = await generate(prompt);
+
+      // Clean request
+      const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
+      const plan = JSON.parse(jsonStr);
+
+      const newMilestones: Milestone[] = plan.map((item: any, index: number) => ({
+        id: Date.now().toString() + index,
+        title: item.title,
+        description: item.description,
+        deadline: item.deadline,
+        impact: item.impact,
+        status: index === 0 ? 'ACTIVE' : 'PENDING',
+        order: index,
+        todos: item.tasks?.map((t: string, i: number) => ({
+          id: `todo-${Date.now()}-${index}-${i}`,
+          task: t,
+          completed: false
+        })) || []
+      }));
+
+      const firstActive = newMilestones[0];
+
+      setMilestoneStack(newMilestones);
+      setActiveMilestone(firstActive);
+
+      await AsyncStorage.setItem('milestoneStack', JSON.stringify(newMilestones));
+      await AsyncStorage.setItem('activeMilestone', JSON.stringify(firstActive));
+
+    } catch (e) {
+      console.error('Failed to generate battle plan:', e);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  useEffect(() => {
+    // Only auto-generate if we have a goal, no milestones, AI is ready, and we aren't already generating
+    if (goal && goal !== 'Loading...' && milestoneStack.length === 0 && !activeMilestone && isReady && !isGenerating) {
+      generateBattlePlan(goal, motivation);
+    }
+  }, [goal, motivation, milestoneStack, activeMilestone, isReady]);
+
   const handleCompleteMilestone = async () => {
     if (!activeMilestone) return;
 
     setShowVictory(true);
-    
+
     // Update stack: Mark current as completed
-    const updatedStack = milestoneStack.map(m => 
+    const updatedStack = milestoneStack.map(m =>
       m.id === activeMilestone.id ? { ...m, status: 'COMPLETED' as const } : m
     );
-    
+
     // Find next pending milestone
     const nextMilestone = updatedStack.find(m => m.status === 'PENDING');
-    
+
     if (nextMilestone) {
       nextMilestone.status = 'ACTIVE';
       await AsyncStorage.setItem('activeMilestone', JSON.stringify(nextMilestone));
@@ -67,7 +132,7 @@ export default function Dashboard() {
     }
 
     await AsyncStorage.setItem('milestoneStack', JSON.stringify(updatedStack));
-    
+
     // Refresh state
     setMilestoneStack(updatedStack);
     setActiveMilestone(nextMilestone);
@@ -75,11 +140,11 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <VictoryOverlay 
-        visible={showVictory} 
-        onClose={() => setShowVictory(false)} 
+      <VictoryOverlay
+        visible={showVictory}
+        onClose={() => setShowVictory(false)}
       />
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
@@ -91,19 +156,19 @@ export default function Dashboard() {
             <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">COMMAND CENTER</Text>
           </View>
           <View className="flex-row gap-3">
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/shiny-object')}
               className="bg-gray-50 rounded-full p-3"
             >
               <Ionicons name="scan-outline" size={20} color="black" />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/war-room')}
               className="bg-swiss-red rounded-full p-3"
             >
               <Ionicons name="add" size={20} color="white" />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => router.push('/profile')}
               className="bg-gray-50 rounded-full p-3"
             >
@@ -121,20 +186,27 @@ export default function Dashboard() {
         <MilestoneStack milestones={milestoneStack} />
 
         {/* Primary Action: Milestone */}
-        <MilestoneCard 
-          milestone={activeMilestone}
-          onPress={() => {
-            if (activeMilestone) {
-              router.push({
-                pathname: '/tactical-plan',
-                params: { milestone: JSON.stringify(activeMilestone) }
-              });
-            } else {
-              router.push('/war-room');
-            }
-          }}
-          onComplete={handleCompleteMilestone}
-        />
+        {isGenerating ? (
+          <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">
+            <Text className="text-white font-bold text-lg mb-2">GENERATING BATTLE PLAN...</Text>
+            <Text className="text-gray-400 text-xs tracking-widest">ANALYZING VICTORY PATH</Text>
+          </View>
+        ) : (
+          <MilestoneCard
+            milestone={activeMilestone}
+            onPress={() => {
+              if (activeMilestone) {
+                router.push({
+                  pathname: '/tactical-plan',
+                  params: { milestone: JSON.stringify(activeMilestone) }
+                });
+              } else {
+                router.push('/war-room');
+              }
+            }}
+            onComplete={handleCompleteMilestone}
+          />
+        )}
 
         {/* Year Progress Widget */}
         <View className="mb-8">
@@ -143,9 +215,9 @@ export default function Dashboard() {
 
         {/* Motivation Section */}
         <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">YOUR CONTRACT</Text>
-        <MotivationCard 
-          goal={goal} 
-          motivation={motivation} 
+        <MotivationCard
+          goal={goal}
+          motivation={motivation}
           onEdit={() => router.push('/(onboarding)')}
         />
 

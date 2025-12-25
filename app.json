@@ -30,8 +30,7 @@
       "expo-router",
       "expo-font",
       "expo-secure-store",
-      "expo-web-browser",
-      "expo-llm-mediapipe"
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

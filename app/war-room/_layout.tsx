@@ -1,16 +1,9 @@
-import { withLayoutContext } from 'expo-router';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { Stack, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { WarRoomProvider, useWarRoom } from './context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useEffect } from 'react';
-
-const { Navigator } = createMaterialTopTabNavigator();
-
-export const MaterialTopTabs = withLayoutContext(Navigator);
 
 function PulsingText({ children, className }: { children: React.ReactNode, className?: string }) {
   const opacity = useSharedValue(1);
@@ -37,12 +30,15 @@ function PulsingText({ children, className }: { children: React.ReactNode, class
   );
 }
 
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 function WarRoomHeader() {
   const router = useRouter();
   const { draftStack, deployStack } = useWarRoom();
 
   return (
-    <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center bg-white">
+    <SafeAreaView edges={['top']} className="bg-white border-b border-gray-100">
+      <View className="px-6 py-4 flex-row justify-between items-center bg-white">
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
@@ -52,36 +48,37 @@ function WarRoomHeader() {
             {draftStack.length > 0 ? `${draftStack.length} MISSIONS STAGED` : 'LIVE UPLINK'}
           </PulsingText>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={deployStack}
           disabled={draftStack.length === 0}
           className={`p-2 -mr-2 ${draftStack.length > 0 ? 'opacity-100' : 'opacity-0'}`}
         >
-           <Ionicons name="checkmark-done" size={24} color="black" />
+          <Ionicons name="checkmark-done" size={24} color="black" />
         </TouchableOpacity>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 export default function WarRoomLayout() {
   return (
     <WarRoomProvider>
-      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-        <WarRoomHeader />
-        <MaterialTopTabs 
-            id="war-room-tabs"
-            screenOptions={{
-                tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold', letterSpacing: 1 },
-                tabBarStyle: { backgroundColor: 'white', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-                tabBarIndicatorStyle: { backgroundColor: 'black', height: 3 },
-                tabBarActiveTintColor: 'black',
-                tabBarInactiveTintColor: '#9CA3AF',
-            }}
-        >
-            <MaterialTopTabs.Screen name="index" options={{ title: 'AI STRATEGIST' }} />
-            <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL ENTRY' }} />
-        </MaterialTopTabs>
-      </SafeAreaView>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ header: () => <WarRoomHeader /> }} />
+        <Stack.Screen
+          name="edit-milestone"
+          options={{
+            presentation: 'modal',
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="review"
+          options={{
+            headerShown: false
+          }}
+        />
+      </Stack>
     </WarRoomProvider>
   );
 }
