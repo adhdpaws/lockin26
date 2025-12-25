@@ -1,16 +1,22 @@
-import { View, Text, ScrollView, TouchableOpacity, Share, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Milestone } from '../types';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 
 export default function WarPathScreen() {
     const router = useRouter();
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Sharing Logic
+    const shareViewRef = useRef<View>(null);
+    const [shareData, setShareData] = useState<{ milestone: Milestone, index: number } | null>(null);
 
     // Load data
     const loadData = async () => {
@@ -34,9 +40,28 @@ export default function WarPathScreen() {
 
     const handleShare = async (milestone: Milestone, index: number) => {
         try {
-            await Share.share({
-                message: `MISSION COMPLETE: ${milestone.title}\n\nI just executed milestone #${index + 1} on my war path to victory.\n\n#LOCKIN2025 #WarMode`,
-            });
+            setShareData({ milestone, index });
+
+            // Wait for render
+            setTimeout(async () => {
+                if (shareViewRef.current) {
+                    try {
+                        const uri = await captureRef(shareViewRef, {
+                            format: "png",
+                            quality: 0.9,
+                            result: "tmpfile",
+                        });
+
+                        await Sharing.shareAsync(uri, {
+                            dialogTitle: 'Share your Victory',
+                            mimeType: 'image/png',
+                            UTI: 'public.png'
+                        });
+                    } catch (err) {
+                        console.error("Snapshot failed", err);
+                    }
+                }
+            }, 100);
         } catch (error) {
             console.log(error);
         }
@@ -99,7 +124,7 @@ export default function WarPathScreen() {
                                 <View className="items-center">
                                     {/* Node */}
                                     <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' :
-                                            isActive ? 'bg-white border-swiss-red' : 'bg-white border-gray-200'
+                                        isActive ? 'bg-white border-swiss-red' : 'bg-white border-gray-200'
                                         }`}>
                                         {isCompleted ? (
                                             <Ionicons name="checkmark" size={16} color="white" />
@@ -118,7 +143,7 @@ export default function WarPathScreen() {
 
                                 {/* Content Card */}
                                 <View className={`flex-1 mb-6 p-5 rounded-2xl border ${isActive ? 'bg-white border-swiss-red shadow-md' :
-                                        isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'
+                                    isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100'
                                     }`}>
                                     <View className="flex-row justify-between items-start mb-2">
                                         <View className="flex-1 mr-2">
@@ -155,6 +180,49 @@ export default function WarPathScreen() {
                     })}
                 </View>
             </ScrollView>
+
+            {/* Hidden Share Card View */}
+            <View
+                style={{
+                    position: 'absolute',
+                    top: 1000, // Move off-screen
+                    left: 0,
+                    width: 400,
+                    height: 500,
+                    backgroundColor: '#FF3B30', // Swiss Red
+                    padding: 40,
+                    justifyContent: 'space-between'
+                }}
+                ref={shareViewRef}
+                collapsable={false}
+            >
+                <View>
+                    <Text className="text-white font-black text-2xl tracking-widest mb-2">MISSION</Text>
+                    <Text className="text-white/80 font-bold text-lg tracking-widest">ACCOMPLISHED</Text>
+                </View>
+
+                <View>
+                    <Text className="text-white/60 font-bold text-xs tracking-[0.3em] mb-4">
+                        MILESTONE 0{shareData?.index !== undefined ? shareData.index + 1 : 0}
+                    </Text>
+                    <Text className="text-white font-black text-5xl leading-tight mb-4">
+                        {shareData?.milestone.title}
+                    </Text>
+                    <View className="bg-white/20 self-start px-4 py-2 rounded-lg">
+                        <Text className="text-white font-bold">{shareData?.milestone.deadline}</Text>
+                    </View>
+                </View>
+
+                <View className="border-t border-white/30 pt-8 flex-row justify-between items-center">
+                    <View>
+                        <Text className="text-white font-black text-xl tracking-tighter">LOCKIN 2026</Text>
+                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.2em]">COMMAND CENTER</Text>
+                    </View>
+                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center">
+                        <Ionicons name="checkmark-sharp" size={32} color="#FF3B30" />
+                    </View>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }

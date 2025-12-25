@@ -145,7 +145,7 @@ export default function Dashboard() {
         onClose={() => setShowVictory(false)}
       />
       <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         showsVerticalScrollIndicator={false}
       >
