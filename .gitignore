@@ -1,0 +1,41 @@
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native
+android/
+ios/
+.build/
+
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+bun.lockb
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Expo Type Generation
+expo-env.d.ts
