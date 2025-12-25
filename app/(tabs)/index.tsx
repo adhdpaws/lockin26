@@ -183,7 +183,31 @@ export default function Dashboard() {
           <DayProgressWidget />
         </View>
 
-        <MilestoneStack milestones={milestoneStack} />
+        {/* War Path Summary Widget */}
+        <TouchableOpacity
+          onPress={() => router.push('/war-path')}
+          className="mb-8"
+        >
+          <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">WAR PATH</Text>
+          <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-row justify-between items-center">
+            <View className="flex-row items-center gap-4">
+              <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center shadow-sm">
+                <Text className="text-white font-black text-xl">
+                  {milestoneStack.filter(m => m.status === 'COMPLETED').length}
+                </Text>
+              </View>
+              <View>
+                <Text className="font-black text-lg">CAMPAIGN LOG</Text>
+                <Text className="text-xs text-gray-500 font-medium">
+                  {milestoneStack.length} Missions Scheduled
+                </Text>
+              </View>
+            </View>
+            <View className="bg-gray-50 p-3 rounded-full">
+              <Ionicons name="chevron-forward" size={20} color="black" />
+            </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Primary Action: Milestone */}
         {isGenerating ? (
