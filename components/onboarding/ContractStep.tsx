@@ -1,11 +1,11 @@
 import { View, Text, Dimensions, TouchableOpacity, Modal } from 'react-native';
-import Animated, { 
+import Animated, {
   FadeIn,
-  FadeInDown, 
+  FadeInDown,
   ZoomIn,
-  useAnimatedStyle, 
-  useSharedValue, 
-  withSpring, 
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
   withTiming,
   Easing,
   runOnJS,
@@ -43,13 +43,13 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
 
     // Mission Out
     setTimeout(() => setSequenceStep(2), 2500);
-    
+
     // Why In
     setTimeout(() => setSequenceStep(3), 3000);
-    
+
     // Why Out
     setTimeout(() => setSequenceStep(4), 5500);
-    
+
     // Finale (Status Report)
     setTimeout(() => {
       setSequenceStep(5);
@@ -126,7 +126,7 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
             )}
           </View>
           <Text className="font-black text-xl text-black leading-6 mb-6">{goal}</Text>
-          
+
           <View className="flex-row justify-between items-center mb-2">
             <Text className="font-bold text-xs text-gray-400 tracking-widest">MOTIVATION</Text>
             {onEditMotivation && (
@@ -146,24 +146,24 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
       </View>
 
       <Animated.View entering={FadeInDown.delay(900)}>
-        <View 
+        <View
           className="bg-gray-100 rounded-full justify-center overflow-hidden relative"
           style={{ height: SLIDER_HEIGHT, width: SLIDER_WIDTH }}
         >
           {/* Progress Fill */}
-          <Animated.View 
+          <Animated.View
             className="absolute left-0 top-0 bottom-0 bg-swiss-red rounded-full"
             style={fillStyle}
           />
 
-          <Animated.Text 
+          <Animated.Text
             className="absolute w-full text-center font-bold text-gray-400 tracking-widest"
             style={textStyle}
           >
             SLIDE TO LOCK IN
           </Animated.Text>
 
-          <Animated.Text 
+          <Animated.Text
             className="absolute w-full text-center font-bold text-white tracking-widest"
             style={successTextStyle}
           >
@@ -171,7 +171,7 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
           </Animated.Text>
 
           <GestureDetector gesture={gesture}>
-            <Animated.View 
+            <Animated.View
               className="absolute left-0 top-0 bottom-0 rounded-full justify-center items-center"
               style={[{ width: KNOB_WIDTH, height: SLIDER_HEIGHT }, knobStyle]}
             >
@@ -184,11 +184,11 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
       {/* Success Modal Sequence */}
       <Modal visible={showSplash} animationType="fade" transparent={false}>
         <View className="flex-1 bg-black justify-center items-center relative overflow-hidden">
-          
+
           {/* Phase 1: Mission */}
           {sequenceStep === 1 && (
-            <Animated.View 
-              entering={FadeIn.duration(500)} 
+            <Animated.View
+              entering={FadeIn.duration(500)}
               exiting={FadeOut.duration(500)}
               className="px-8 items-center"
             >
@@ -199,8 +199,8 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
 
           {/* Phase 3: Why */}
           {sequenceStep === 3 && (
-            <Animated.View 
-              entering={FadeIn.duration(500)} 
+            <Animated.View
+              entering={FadeIn.duration(500)}
               exiting={FadeOut.duration(500)}
               className="px-8 items-center"
             >
@@ -211,7 +211,7 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
 
           {/* Phase 5: The Contract Status */}
           {sequenceStep >= 5 && (
-            <Animated.View 
+            <Animated.View
               entering={FadeIn.duration(800)}
               className="flex-1 bg-swiss-red w-full h-full absolute top-0 left-0 z-20"
             >
@@ -235,12 +235,12 @@ export function ContractStep({ goal, motivation, onLockIn, onEditGoal, onEditMot
                 </View>
 
                 <Animated.View entering={FadeInDown.delay(2500).duration(800)}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={onLockIn}
                     className="bg-white py-6 rounded-full items-center shadow-lg w-full"
                   >
                     <Text className="text-swiss-red font-black text-lg tracking-widest">
-                      BEGIN 2026
+                      BEGIN {new Date().getFullYear()}
                     </Text>
                   </TouchableOpacity>
                 </Animated.View>

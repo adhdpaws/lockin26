@@ -34,8 +34,26 @@ export default function Dashboard() {
 
     if (savedGoal) setGoal(savedGoal);
     if (savedMotivation) setMotivation(savedMotivation);
-    if (savedActive) setActiveMilestone(JSON.parse(savedActive));
-    if (savedStack) setMilestoneStack(JSON.parse(savedStack));
+
+    // Calculate daysLeft for milestones
+    const calculateDaysLeft = (milestone: Milestone): Milestone => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const deadline = new Date(milestone.deadline);
+      deadline.setHours(0, 0, 0, 0);
+      const diffTime = deadline.getTime() - today.getTime();
+      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return { ...milestone, daysLeft: Math.max(0, daysLeft) };
+    };
+
+    if (savedActive) {
+      const parsedActive = JSON.parse(savedActive);
+      setActiveMilestone(calculateDaysLeft(parsedActive));
+    }
+    if (savedStack) {
+      const parsedStack: Milestone[] = JSON.parse(savedStack);
+      setMilestoneStack(parsedStack.map(calculateDaysLeft));
+    }
   };
 
   useFocusEffect(
