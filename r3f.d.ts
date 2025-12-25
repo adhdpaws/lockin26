@@ -1,4 +1,4 @@
-import { ReactThreeFiber } from '@react-three/fiber';
+import { ReactThreeFiber } from '@react-three/fiber/native';
 import * as THREE from 'three';
 
 declare global {

@@ -4,7 +4,6 @@ import { Text, Center } from '@react-three/drei/native';
 import { DeviceMotion } from 'expo-sensors';
 import { View } from 'react-native';
 import * as THREE from 'three';
-import { ReactThreeFiber } from '@react-three/fiber';
 
 function TiltingText({ text }: { text: string }) {
     const mesh = useRef<THREE.Group>(null);
