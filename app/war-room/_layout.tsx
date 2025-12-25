@@ -1,7 +1,7 @@
 import { Stack, useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { WarRoomProvider, useWarRoom } from './context';
+import { WarRoomProvider, useWarRoom } from './_context';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useEffect } from 'react';
 

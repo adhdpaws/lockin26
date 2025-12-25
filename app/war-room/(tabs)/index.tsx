@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useWarRoom } from '../context';
+import { useWarRoom } from '../_context';
 import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { TacticalCard } from '../../../components/war-room/TacticalCard';

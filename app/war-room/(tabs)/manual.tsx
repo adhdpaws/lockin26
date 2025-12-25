@@ -2,7 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingVi
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, subHours } from 'date-fns';
-import { useWarRoom } from '../context';
+import { useWarRoom } from '../_context';
 import { Milestone } from '../../../types';
 import { schedulePushNotification, scheduleNotificationAtDate } from '../../../services/notifications';
 
@@ -125,8 +125,8 @@ export default function ManualEntry() {
                             key={level}
                             onPress={() => setManualImpact(level)}
                             className={`flex-1 py-4 rounded-xl border-2 items-center ${manualImpact === level
-                                    ? 'bg-black border-black'
-                                    : 'bg-white border-gray-200'
+                                ? 'bg-black border-black'
+                                : 'bg-white border-gray-200'
                                 }`}
                         >
                             <Text className={`font-bold text-xs tracking-widest ${manualImpact === level ? 'text-white' : 'text-gray-400'

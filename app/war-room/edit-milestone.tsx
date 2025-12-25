@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useWarRoom } from './context';
+import { useWarRoom } from './_context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditMilestoneScreen() {

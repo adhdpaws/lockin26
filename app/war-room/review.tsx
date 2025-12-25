@@ -1,7 +1,7 @@
 
 import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useWarRoom } from './context';
+import { useWarRoom } from './_context';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { SafeAreaView } from 'react-native-safe-area-context';
