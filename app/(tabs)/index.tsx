@@ -12,6 +12,7 @@ import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
 import { Milestone } from '../../types';
 import { VictoryOverlay } from '../../components/dashboard/VictoryOverlay';
+import TiltGoalWidget from '../../components/dashboard/TiltGoalWidget';
 import { useAI } from '../../contexts/AIContext';
 
 export default function Dashboard() {
@@ -237,13 +238,9 @@ export default function Dashboard() {
           <YearProgressWidget />
         </View>
 
-        {/* Motivation Section */}
+        {/* Motivation Section / 3D Goal */}
         <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">YOUR CONTRACT</Text>
-        <MotivationCard
-          goal={goal}
-          motivation={motivation}
-          onEdit={() => router.push('/(onboarding)')}
-        />
+        <TiltGoalWidget goal={goal} />
 
       </ScrollView>
     </SafeAreaView>
