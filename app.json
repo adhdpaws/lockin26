@@ -35,6 +35,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c8347986-fc74-480b-a163-694cc8465f7e"
+      }
+    },
+    "owner": "adhd.dev"
   }
 }
