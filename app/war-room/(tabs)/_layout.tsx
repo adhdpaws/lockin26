@@ -11,15 +11,16 @@ export default function WarRoomTabsLayout() {
         <MaterialTopTabs
             id="war-room-tabs"
             screenOptions={{
-                tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold', letterSpacing: 1 },
+                tabBarLabelStyle: { fontSize: 10, fontWeight: 'bold', letterSpacing: 1 },
                 tabBarStyle: { backgroundColor: 'white', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
                 tabBarIndicatorStyle: { backgroundColor: 'black', height: 3 },
                 tabBarActiveTintColor: 'black',
                 tabBarInactiveTintColor: '#9CA3AF',
             }}
         >
-            <MaterialTopTabs.Screen name="index" options={{ title: 'AI STRATEGIST' }} />
-            <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL ENTRY' }} />
+            <MaterialTopTabs.Screen name="index" options={{ title: 'STRATEGIST' }} />
+            <MaterialTopTabs.Screen name="campaign" options={{ title: 'FULL CAMPAIGN' }} />
+            <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL' }} />
         </MaterialTopTabs>
     );
 }

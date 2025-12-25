@@ -129,6 +129,10 @@ export function useOnDeviceAI() {
     }
 
     try {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const todayStr = currentDate.toISOString().split('T')[0];
+
       // STEP 1: Summarize Progress
       const summaryPrompt = `Role: Strategic Analyst.
       Goal: "${goal.title}"
@@ -143,6 +147,12 @@ export function useOnDeviceAI() {
       const prompt = `You are a Tactical War Room Engine.
       Objective: "${goal.title}"
       Campaign Status: "${progressSummary.trim().replace(/"/g, '')}"
+      
+      CRITICAL DATE INFO:
+      - TODAY IS: ${todayStr}
+      - CURRENT YEAR IS: ${currentYear}
+      - ALL DEADLINES MUST BE AFTER ${todayStr}
+      - NEVER use past years. Only use ${currentYear} or ${currentYear + 1}.
 
       TASK:
       Generate 3 DISTINCT strategic options for the IMMEDIATE NEXT STEP.
@@ -159,7 +169,7 @@ export function useOnDeviceAI() {
           "title": "Title (2-4 words)",
           "description": "One sentence rationale",
           "impact": "HIGH",
-        "deadline": "YYYY-MM-DD (MUST BE FUTURE DATE)",
+          "deadline": "YYYY-MM-DD (MUST BE IN ${currentYear} OR ${currentYear + 1}, AFTER ${todayStr})",
           "tasks": ["Task 1", "Task 2", "Task 3"]
         },
         ...
@@ -169,13 +179,16 @@ export function useOnDeviceAI() {
       const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
       const rawOptions = JSON.parse(jsonStr);
 
-      const twoWeeksFromNow = new Date(Date.now() + 12096e5).toISOString().split('T')[0];
-
       return rawOptions.map((opt: any, index: number) => {
         let deadline = opt.deadline;
-        // Safety check: If deadline is missing or in the past, default to 14 days future
-        if (!deadline || new Date(deadline) < new Date()) {
-          deadline = twoWeeksFromNow;
+        const deadlineDate = new Date(deadline);
+
+        // Aggressive date correction - if date is in the past or invalid, fix it
+        if (!deadline || isNaN(deadlineDate.getTime()) || deadlineDate < currentDate) {
+          // Generate a future deadline based on index (2, 4, 6 weeks out)
+          const futureDate = new Date(currentDate);
+          futureDate.setDate(futureDate.getDate() + (14 * (index + 1)));
+          deadline = futureDate.toISOString().split('T')[0];
         }
 
         return {
@@ -199,11 +212,189 @@ export function useOnDeviceAI() {
     }
   };
 
+  const generateFullYearCampaign = async (goal: LockedGoal, existingMilestones: Milestone[] = []): Promise<Milestone[]> => {
+    if (!isReady) {
+      await initialize();
+    }
+
+    try {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+
+      // If we're in the last month of the year, target next year end
+      // Otherwise target current year end
+      const targetYear = currentDate.getMonth() >= 10 ? currentYear + 1 : currentYear;
+      const endOfYear = new Date(targetYear, 11, 31);
+      const daysRemaining = Math.ceil((endOfYear.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // Analyze existing progress
+      const completedMilestones = existingMilestones.filter(m => m.status === 'COMPLETED');
+      const activeMilestones = existingMilestones.filter(m => m.status === 'ACTIVE');
+      const pendingMilestones = existingMilestones.filter(m => m.status === 'PENDING');
+
+      const progressContext = existingMilestones.length > 0
+        ? `
+EXISTING PROGRESS:
+- Completed Milestones (${completedMilestones.length}): ${completedMilestones.map(m => `"${m.title}"`).join(', ') || 'None'}
+- Active Milestone: ${activeMilestones.length > 0 ? `"${activeMilestones[0].title}"` : 'None'}
+- Pending Milestones (${pendingMilestones.length}): ${pendingMilestones.map(m => `"${m.title}"`).join(', ') || 'None'}
+
+IMPORTANT: The user has already made progress. Analyze what's been done and what's remaining.
+DO NOT duplicate or repeat any completed/active/pending milestones.
+Generate ONLY the NEW milestones needed to complete the goal from the current state.`
+        : '';
+
+      // STEP 1: Analyze goal, progress, and determine remaining phases
+      const analysisPrompt = `You are a Strategic Campaign Architect.
+
+OBJECTIVE: "${goal.title}"
+MOTIVATION: "${goal.motivation}"
+CURRENT DATE: ${currentDate.toISOString().split('T')[0]} (YEAR: ${currentYear})
+TARGET COMPLETION: ${endOfYear.toISOString().split('T')[0]} (YEAR: ${targetYear})
+DAYS AVAILABLE: ${daysRemaining}
+${progressContext}
+
+IMPORTANT: All dates you generate MUST be in ${currentYear} or ${targetYear}. Never use past years.
+
+TASK: Analyze this goal and the current progress (if any).
+1. Assess what has been accomplished so far
+2. Determine what phases REMAIN to complete the goal
+3. Only include phases that still need work
+
+Examples of phases: Research, Foundation, Development, Launch, Growth, Scale, Optimization.
+
+OUTPUT: Return a JSON object with two fields:
+{
+  "progressAnalysis": "Brief assessment of current state and what's done",
+  "remainingPhases": ["Phase 1", "Phase 2", ...]
+}
+
+If starting fresh, progressAnalysis should state "Starting from scratch."
+Return ONLY the JSON object. No markdown, no explanation.`;
+
+      const phasesResponse = await generate(analysisPrompt);
+      const phasesJsonStr = phasesResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+      const analysisResult = JSON.parse(phasesJsonStr);
+      const remainingPhases: string[] = analysisResult.remainingPhases || [];
+
+      if (remainingPhases.length === 0) {
+        // Goal might already be achievable with existing milestones
+        return [];
+      }
+
+      // Find the last deadline from existing milestones to start from
+      let startFromDate = currentDate;
+      if (existingMilestones.length > 0) {
+        const allDeadlines = existingMilestones
+          .map(m => new Date(m.deadline))
+          .filter(d => !isNaN(d.getTime()));
+        if (allDeadlines.length > 0) {
+          const lastDeadline = new Date(Math.max(...allDeadlines.map(d => d.getTime())));
+          // Start new milestones after the last existing deadline
+          startFromDate = lastDeadline > currentDate ? lastDeadline : currentDate;
+        }
+      }
+
+      const daysFromStart = Math.ceil((endOfYear.getTime() - startFromDate.getTime()) / (1000 * 60 * 60 * 24));
+
+      // STEP 2: Generate milestones for remaining phases
+      const milestonesPrompt = `You are a Tactical Milestone Generator.
+
+OBJECTIVE: "${goal.title}"
+MOTIVATION: "${goal.motivation}"
+PROGRESS ANALYSIS: "${analysisResult.progressAnalysis}"
+REMAINING PHASES: ${JSON.stringify(remainingPhases)}
+${progressContext}
+
+CRITICAL TIMING INFO:
+- CURRENT YEAR: ${currentYear}
+- TARGET YEAR: ${targetYear}
+- TODAY: ${currentDate.toISOString().split('T')[0]}
+- LAST EXISTING MILESTONE ENDS: ${startFromDate.toISOString().split('T')[0]}
+- NEW MILESTONES MUST START AFTER: ${startFromDate.toISOString().split('T')[0]}
+- CAMPAIGN END DATE: ${endOfYear.toISOString().split('T')[0]}
+- DAYS AVAILABLE: ${daysFromStart}
+
+IMPORTANT: ALL DATES MUST BE IN YEAR ${currentYear} OR ${targetYear}. NEVER use past years like 2024.
+
+TASK: Generate detailed milestones for the REMAINING phases only.
+- Generate as many milestones as needed to complete the objective
+- Each milestone must be achievable and well-scoped
+- DO NOT repeat any work that has already been completed or is in progress
+- Deadlines must be realistic and account for human capacity
+- ALL DEADLINES MUST BE AFTER ${startFromDate.toISOString().split('T')[0]}
+- Dates must be sequential (each milestone after the previous)
+- Spread milestones appropriately across the remaining time
+- Each milestone needs 3-5 concrete, actionable tasks
+
+OUTPUT FORMAT (Strict JSON Array):
+[
+  {
+    "phase": "Phase Name",
+    "title": "Milestone Title (2-5 words)",
+    "description": "One sentence explaining what this achieves",
+    "deadline": "YYYY-MM-DD",
+    "impact": "HIGH" or "CRITICAL",
+    "tasks": ["Task 1", "Task 2", "Task 3"]
+  }
+]
+
+RULES:
+1. First new milestone should start 1-2 weeks AFTER ${startFromDate.toISOString().split('T')[0]}
+2. Final milestone should complete the goal before ${endOfYear.toISOString().split('T')[0]}
+3. Leave buffer time between milestones (minimum 5-7 days)
+4. Mark truly critical milestones as "CRITICAL", others as "HIGH"
+5. Tasks must be specific and actionable, not vague
+6. DO NOT include milestones similar to: ${existingMilestones.map(m => m.title).join(', ') || 'N/A'}
+
+Return ONLY the JSON array. No markdown, no explanation.`;
+
+      const milestonesResponse = await generate(milestonesPrompt);
+      const milestonesJsonStr = milestonesResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+      const rawMilestones = JSON.parse(milestonesJsonStr);
+
+      // Start ordering after existing milestones
+      const startOrder = existingMilestones.length;
+
+      // Transform to proper Milestone format
+      return rawMilestones.map((m: any, index: number) => {
+        // Validate and fix deadline if needed
+        let deadline = m.deadline;
+        const deadlineDate = new Date(deadline);
+        if (isNaN(deadlineDate.getTime()) || deadlineDate < currentDate) {
+          // Generate a fallback deadline based on index
+          const fallbackDate = new Date(currentDate);
+          fallbackDate.setDate(fallbackDate.getDate() + (14 * (index + 1)));
+          deadline = fallbackDate.toISOString().split('T')[0];
+        }
+
+        return {
+          id: `campaign-${Date.now()}-${index}`,
+          title: m.title,
+          description: m.description,
+          deadline: deadline,
+          impact: m.impact as 'HIGH' | 'CRITICAL',
+          status: 'PENDING' as const,
+          order: startOrder + index,
+          todos: (m.tasks || []).map((t: string, i: number) => ({
+            id: `todo-${Date.now()}-${index}-${i}`,
+            task: t,
+            completed: false
+          }))
+        };
+      });
+    } catch (e) {
+      console.error("Full Year Campaign Generation Error:", e);
+      return [];
+    }
+  };
+
   return {
     getStrategyResponse,
     analyzeShinyObject,
     generateTodosForMilestone,
     generateTacticalOptions,
+    generateFullYearCampaign,
     isReady,
     modelStatus
   };

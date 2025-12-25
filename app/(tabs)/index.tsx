@@ -55,18 +55,32 @@ export default function Dashboard() {
     setIsGenerating(true);
 
     try {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const todayStr = currentDate.toISOString().split('T')[0];
+
       const prompt = `You are a strategic planning AI. The user has a goal: "${currentGoal}". Motivation: "${currentMotivation}". 
+      
+      CRITICAL DATE INFORMATION:
+      - TODAY IS: ${todayStr}
+      - CURRENT YEAR IS: ${currentYear}
+      - ALL DEADLINES MUST BE AFTER ${todayStr}
+      - NEVER use past dates or past years like 2024
+      - Only use dates in ${currentYear} or ${currentYear + 1}
+      
       Create a tactical plan with 5 distinct, sequential milestones to achieve this goal. 
       Return ONLY a raw JSON array. No markdown, no code blocks. 
       Each object must have: 
       - title (string)
       - description (string)
-      - deadline (calculated relative to now, format YYYY-MM-DD)
+      - deadline (MUST BE FUTURE DATE in format YYYY-MM-DD, starting from ${todayStr})
       - impact ('HIGH' or 'CRITICAL')
       - tasks (array of strings, 3-5 actionable steps per milestone)
       
-      Example format:
-      [{"title": "...", "description": "...", "deadline": "2024-01-01", "impact": "HIGH", "tasks": ["step 1", "step 2"]}]`;
+      IMPORTANT: First milestone should be 2-3 weeks from today (${todayStr}). Space milestones 3-4 weeks apart.
+      
+      Example format for TODAY being ${todayStr}:
+      [{"title": "...", "description": "...", "deadline": "${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}", "impact": "HIGH", "tasks": ["step 1", "step 2"]}]`;
 
       const response = await generate(prompt);
 
@@ -74,20 +88,32 @@ export default function Dashboard() {
       const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
       const plan = JSON.parse(jsonStr);
 
-      const newMilestones: Milestone[] = plan.map((item: any, index: number) => ({
-        id: Date.now().toString() + index,
-        title: item.title,
-        description: item.description,
-        deadline: item.deadline,
-        impact: item.impact,
-        status: index === 0 ? 'ACTIVE' : 'PENDING',
-        order: index,
-        todos: item.tasks?.map((t: string, i: number) => ({
-          id: `todo-${Date.now()}-${index}-${i}`,
-          task: t,
-          completed: false
-        })) || []
-      }));
+      const newMilestones: Milestone[] = plan.map((item: any, index: number) => {
+        let deadline = item.deadline;
+        const deadlineDate = new Date(deadline);
+
+        // Aggressive date correction - if date is in the past or invalid, fix it
+        if (!deadline || isNaN(deadlineDate.getTime()) || deadlineDate < currentDate) {
+          const futureDate = new Date(currentDate);
+          futureDate.setDate(futureDate.getDate() + (14 * (index + 1)));
+          deadline = futureDate.toISOString().split('T')[0];
+        }
+
+        return {
+          id: Date.now().toString() + index,
+          title: item.title,
+          description: item.description,
+          deadline: deadline,
+          impact: item.impact,
+          status: index === 0 ? 'ACTIVE' : 'PENDING',
+          order: index,
+          todos: item.tasks?.map((t: string, i: number) => ({
+            id: `todo-${Date.now()}-${index}-${i}`,
+            task: t,
+            completed: false
+          })) || []
+        };
+      });
 
       const firstActive = newMilestones[0];
 
