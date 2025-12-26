@@ -1,9 +1,93 @@
 import { GoogleGenAI, Schema, Type } from "@google/genai";
 import { LockedGoal, Milestone, ShinyObjectAnalysis, StrategyResponse, ChatMessage } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// Default API key from environment
+const DEFAULT_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
+// Storage key for custom API key
+const CUSTOM_API_KEY_STORAGE = 'customGeminiApiKey';
+
+// Get the current API key (custom or default)
+async function getApiKey(): Promise<string> {
+  const customKey = await AsyncStorage.getItem(CUSTOM_API_KEY_STORAGE);
+  return customKey || DEFAULT_API_KEY;
+}
+
+// Save custom API key
+export async function saveCustomApiKey(key: string): Promise<void> {
+  if (key.trim()) {
+    await AsyncStorage.setItem(CUSTOM_API_KEY_STORAGE, key.trim());
+  } else {
+    await AsyncStorage.removeItem(CUSTOM_API_KEY_STORAGE);
+  }
+}
+
+// Get custom API key
+export async function getCustomApiKey(): Promise<string | null> {
+  return AsyncStorage.getItem(CUSTOM_API_KEY_STORAGE);
+}
+
+// Check if custom key is set
+export async function hasCustomApiKey(): Promise<boolean> {
+  const key = await AsyncStorage.getItem(CUSTOM_API_KEY_STORAGE);
+  return !!key;
+}
+
+// Test if an API key is valid
+export async function testApiKey(key: string): Promise<{ valid: boolean; error?: string }> {
+  if (!key.trim()) {
+    return { valid: false, error: 'API key is empty' };
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: key });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: 'Say "OK" in one word.',
+    });
+    return { valid: !!response.text };
+  } catch (error: any) {
+    const message = error?.message || 'Unknown error';
+    if (message.includes('API_KEY_INVALID')) {
+      return { valid: false, error: 'Invalid API key' };
+    }
+    if (message.includes('RATE_LIMIT') || message.includes('quota')) {
+      return { valid: false, error: 'Rate limit exceeded' };
+    }
+    return { valid: false, error: message };
+  }
+}
+
+// Core generation function with optional custom key
+export async function generateWithGemini(prompt: string, customKey?: string): Promise<string> {
+  const apiKey = customKey || await getApiKey();
+
+  if (!apiKey) {
+    throw new Error('NO_API_KEY');
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+    });
+    return response.text || '';
+  } catch (error: any) {
+    const message = error?.message || '';
+    if (message.includes('RATE_LIMIT') || message.includes('quota') || message.includes('429')) {
+      throw new Error('RATE_LIMIT');
+    }
+    if (message.includes('API_KEY_INVALID') || message.includes('401')) {
+      throw new Error('INVALID_KEY');
+    }
+    throw error;
+  }
+}
+
+// Schemas for structured responses
 const distractionSchema: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -46,14 +130,18 @@ const strategySchema: Schema = {
 };
 
 export const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage[]): Promise<StrategyResponse> => {
+  const apiKey = await getApiKey();
+
   if (!apiKey) {
     return {
-      message: "API Key missing. Cannot strategize. Please set EXPO_PUBLIC_GEMINI_API_KEY in .env",
+      message: "API Key missing. Please set your Gemini API key in Profile → AI Settings.",
       options: []
     };
   }
 
   try {
+    const ai = new GoogleGenAI({ apiKey });
+
     const systemPrompt = `
       You are LOCKIN_AI, a ruthless, high-performance strategic commander. 
       The user has locked in this 2026 goal: "${goal.title}".
@@ -83,13 +171,12 @@ export const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage
       }))
     ];
 
-    // Ensure the last message prompts the model to respond
     if (contents[contents.length - 1].role !== 'user') {
-        contents.push({ role: 'user', parts: [{ text: "Continue strategy session." }]});
+      contents.push({ role: 'user', parts: [{ text: "Continue strategy session." }] });
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: contents,
       config: {
         responseMimeType: "application/json",
@@ -99,18 +186,29 @@ export const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage
 
     return JSON.parse(response.text || '{}') as StrategyResponse;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in strategy session:", error);
+
+    if (error.message?.includes('RATE_LIMIT') || error.message?.includes('quota')) {
+      return {
+        message: "Rate limit reached. Please add your own API key in Profile → AI Settings.",
+        options: []
+      };
+    }
+
     return {
       message: "Communication link unstable. Re-engage.",
       options: []
     };
   }
 };
+
 export const generateTodosForMilestone = async (milestoneTitle: string, goalTitle: string): Promise<string[]> => {
+  const apiKey = await getApiKey();
   if (!apiKey) return ["Define task 1", "Define task 2", "Execute"];
 
   try {
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
       Context: User Goal: "${goalTitle}".
       Current Milestone: "${milestoneTitle}".
@@ -122,7 +220,7 @@ export const generateTodosForMilestone = async (milestoneTitle: string, goalTitl
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -135,12 +233,16 @@ export const generateTodosForMilestone = async (milestoneTitle: string, goalTitl
     return ["Plan execution", "Execute step 1", "Review progress"];
   }
 };
+
 export const analyzeShinyObject = async (currentGoal: LockedGoal, newIdea: string): Promise<ShinyObjectAnalysis> => {
-   if (!apiKey) {
-    throw new Error("API Key missing");
+  const apiKey = await getApiKey();
+
+  if (!apiKey) {
+    throw new Error("API Key missing. Set it in Profile → AI Settings.");
   }
 
   try {
+    const ai = new GoogleGenAI({ apiKey });
     const prompt = `
       Context: The user is strictly committed to this goal for 2026: "${currentGoal.title}".
       The user just had this new idea: "${newIdea}".
@@ -150,7 +252,7 @@ export const analyzeShinyObject = async (currentGoal: LockedGoal, newIdea: strin
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -167,15 +269,17 @@ export const analyzeShinyObject = async (currentGoal: LockedGoal, newIdea: strin
 };
 
 export const getDailyMotivation = async (goal: LockedGoal): Promise<string> => {
-     if (!apiKey) return "Stay hard. Stay focused.";
+  const apiKey = await getApiKey();
+  if (!apiKey) return "Stay hard. Stay focused.";
 
-     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Give me a very short, punchy, slightly intense motivational quote tailored to someone working on: "${goal.title}". Max 15 words. No cliches.`,
-        });
-        return response.text || "Keep pushing.";
-     } catch (e) {
-         return "Focus on the objective.";
-     }
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: `Give me a very short, punchy, slightly intense motivational quote tailored to someone working on: "${goal.title}". Max 15 words. No cliches.`,
+    });
+    return response.text || "Keep pushing.";
+  } catch (e) {
+    return "Focus on the objective.";
+  }
 }

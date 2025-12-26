@@ -2,7 +2,7 @@ import { useAI } from '../contexts/AIContext';
 import { LockedGoal, ChatMessage, StrategyResponse, ShinyObjectAnalysis, Milestone } from '../types';
 
 export function useOnDeviceAI() {
-  const { generate, isReady, modelStatus, initialize } = useAI();
+  const { generate, isReady, modelStatus, initialize, aiProvider } = useAI();
 
   const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage[]): Promise<StrategyResponse> => {
     if (!isReady) {
@@ -396,6 +396,7 @@ Return ONLY the JSON array. No markdown, no explanation.`;
     generateTacticalOptions,
     generateFullYearCampaign,
     isReady,
-    modelStatus
+    modelStatus,
+    aiProvider
   };
 }
