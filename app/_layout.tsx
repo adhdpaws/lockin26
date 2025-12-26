@@ -7,6 +7,10 @@ import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { registerForPushNotificationsAsync } from '../services/notifications';
 import { AIProvider } from '../contexts/AIContext';
+import { registerBackgroundHandler } from '../services/focusNotification';
+
+// Register notifee background handler (must be outside component)
+registerBackgroundHandler();
 
 SplashScreen.preventAutoHideAsync();
 

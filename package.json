@@ -13,6 +13,7 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@bacons/apple-targets": "^3.0.6",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo/ngrok": "^4.1.0",
     "@expo/vector-icons": "^15.0.3",

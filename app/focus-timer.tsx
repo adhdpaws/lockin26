@@ -1,5 +1,5 @@
-import { View, Text, TouchableOpacity, Dimensions, AppState } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, AppState, AppStateStatus, Platform } from 'react-native';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,19 +12,12 @@ import Animated, {
     withSequence,
     FadeIn,
     FadeInDown,
-    FadeOut,
     ZoomIn
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
-import {
-    showTimerNotification,
-    updateTimerNotification,
-    cancelTimerNotification,
-    setupNotificationListeners
-} from '../services/focusNotification';
 
 type TimerState = 'idle' | 'active' | 'complete';
 
@@ -89,54 +82,11 @@ export default function FocusTimerScreen() {
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const shareCardRef = useRef<ViewShot>(null);
 
-    // Handle notification stop action
-    const handleNotificationStop = async () => {
-        await handleEnd();
-    };
-
-    useEffect(() => {
-        loadGoal();
-        checkActiveSession();
-
-        // Setup notification listener for stop action
-        const unsubscribe = setupNotificationListeners(handleNotificationStop);
-
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-            unsubscribe();
-        };
-    }, []);
-
-    // Calculate elapsed time from start time (survives background)
-    useEffect(() => {
-        if (timerState === 'active' && startTime) {
-            // Show initial notification
-            showTimerNotification(elapsedSeconds, goal);
-
-            intervalRef.current = setInterval(() => {
-                const now = Date.now();
-                const elapsed = Math.floor((now - startTime) / 1000);
-                setElapsedSeconds(elapsed);
-                // Update notification every tick
-                updateTimerNotification(elapsed, goal);
-            }, 1000);
-        }
-
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    }, [timerState, startTime]);
-
     const loadGoal = async () => {
         const savedGoal = await AsyncStorage.getItem('mainGoal');
         if (savedGoal) setGoal(savedGoal);
     };
 
-    // Check if there's an active session (for app resume)
     const checkActiveSession = async () => {
         const savedStartTime = await AsyncStorage.getItem('focusStartTime');
         if (savedStartTime) {
@@ -145,10 +95,45 @@ export default function FocusTimerScreen() {
             setTimerState('active');
             const elapsed = Math.floor((Date.now() - start) / 1000);
             setElapsedSeconds(elapsed);
-            // Show notification for resumed session
-            showTimerNotification(elapsed, goal);
         }
     };
+
+    const handleEnd = useCallback(async () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+        await AsyncStorage.removeItem('focusStartTime');
+        const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+        setQuote(randomQuote);
+        setTimerState('complete');
+    }, []);
+
+    // Initial setup
+    useEffect(() => {
+        loadGoal();
+        checkActiveSession();
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, []);
+
+    // Timer interval - runs only when active
+    useEffect(() => {
+        if (timerState === 'active' && startTime) {
+            intervalRef.current = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                setElapsedSeconds(elapsed);
+            }, 1000);
+        }
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
+    }, [timerState, startTime]);
 
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
@@ -160,9 +145,7 @@ export default function FocusTimerScreen() {
     const formatDuration = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
-        if (hrs > 0) {
-            return `${hrs}h ${mins}m`;
-        }
+        if (hrs > 0) return `${hrs}h ${mins}m`;
         return mins > 0 ? `${mins} min` : `${seconds} sec`;
     };
 
@@ -172,31 +155,14 @@ export default function FocusTimerScreen() {
         setStartTime(now);
         setTimerState('active');
         setElapsedSeconds(0);
-        // Persist start time for background survival
+        // Save start time for background survival
         await AsyncStorage.setItem('focusStartTime', now.toString());
-    };
-
-    const handleEnd = async () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-        }
-        // Clear persisted session and notification
-        await AsyncStorage.removeItem('focusStartTime');
-        await cancelTimerNotification();
-        // Pick random quote
-        const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
-        setQuote(randomQuote);
-        setTimerState('complete');
     };
 
     const handleShare = async () => {
         try {
             if (shareCardRef.current) {
-                const uri = await captureRef(shareCardRef, {
-                    format: 'png',
-                    quality: 1,
-                });
+                const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
                 await Sharing.shareAsync(uri);
             }
         } catch (e) {
@@ -208,10 +174,7 @@ export default function FocusTimerScreen() {
         try {
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status === 'granted' && shareCardRef.current) {
-                const uri = await captureRef(shareCardRef, {
-                    format: 'png',
-                    quality: 1,
-                });
+                const uri = await captureRef(shareCardRef, { format: 'png', quality: 1 });
                 await MediaLibrary.saveToLibraryAsync(uri);
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             }
@@ -220,9 +183,7 @@ export default function FocusTimerScreen() {
         }
     };
 
-    const handleClose = () => {
-        router.back();
-    };
+    const handleClose = () => router.back();
 
     const handleNewSession = () => {
         setStartTime(null);
@@ -316,7 +277,6 @@ export default function FocusTimerScreen() {
                 {timerState === 'complete' && (
                     <View className="flex-1 px-6">
                         <Animated.View entering={FadeIn} className="flex-1 justify-center">
-                            {/* Share Card */}
                             <ViewShot ref={shareCardRef} options={{ format: 'png', quality: 1 }}>
                                 <View className="bg-swiss-red rounded-3xl p-8 items-center">
                                     <Text className="text-white/60 font-bold text-xs tracking-[0.3em] mb-2">
@@ -334,9 +294,7 @@ export default function FocusTimerScreen() {
                                     </Text>
 
                                     <View className="border-t border-white/20 pt-4 w-full items-center">
-                                        <Text className="text-white/60 font-bold text-xs">
-                                            {today}
-                                        </Text>
+                                        <Text className="text-white/60 font-bold text-xs">{today}</Text>
                                         <Text className="text-white font-black text-sm tracking-widest mt-1">
                                             LOCKIN26
                                         </Text>
@@ -345,7 +303,6 @@ export default function FocusTimerScreen() {
                             </ViewShot>
                         </Animated.View>
 
-                        {/* Action Buttons */}
                         <Animated.View entering={FadeInDown.delay(300)} className="pb-8">
                             <View className="flex-row gap-3 mb-4">
                                 <TouchableOpacity

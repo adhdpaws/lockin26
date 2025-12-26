@@ -1,5 +1,12 @@
-import notifee, { AndroidImportance, AndroidCategory, EventType } from '@notifee/react-native';
-import { AppState, Platform, AppStateStatus } from 'react-native';
+import notifee, {
+    AndroidImportance,
+    AndroidCategory,
+    EventType,
+    AndroidColor,
+    TimestampTrigger,
+    TriggerType
+} from '@notifee/react-native';
+import { Platform, AppState } from 'react-native';
 
 const CHANNEL_ID = 'focus-timer';
 const NOTIFICATION_ID = 'focus-session';
@@ -10,74 +17,51 @@ async function createChannel() {
         await notifee.createChannel({
             id: CHANNEL_ID,
             name: 'Focus Timer',
-            importance: AndroidImportance.LOW, // No sound
+            importance: AndroidImportance.DEFAULT,
             vibration: false,
         });
     }
 }
 
-// Format seconds to HH:MM:SS
-function formatTime(seconds: number): string {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-export async function showTimerNotification(elapsedSeconds: number, goalTitle?: string) {
+// Show persistent timer notification with LIVE chronometer (Android)
+// For iOS, we'll need to call this periodically to update
+export async function showOrUpdateTimerNotification(startTimeMs: number, goalTitle?: string) {
     await createChannel();
 
-    await notifee.displayNotification({
-        id: NOTIFICATION_ID,
-        title: '🔥 Focus Session Active',
-        body: `${formatTime(elapsedSeconds)} ${goalTitle ? `• ${goalTitle.substring(0, 30)}` : ''}`,
-        android: {
-            channelId: CHANNEL_ID,
-            category: AndroidCategory.PROGRESS,
-            importance: AndroidImportance.LOW,
-            ongoing: true, // Can't be dismissed
-            pressAction: {
-                id: 'default',
-            },
-            actions: [
-                {
-                    title: 'End Session',
-                    pressAction: {
-                        id: 'stop',
-                    },
-                },
-            ],
-        },
-        ios: {
-            categoryId: 'timer',
-        },
-    });
-}
+    const elapsedSeconds = Math.floor((Date.now() - startTimeMs) / 1000);
+    const hrs = Math.floor(elapsedSeconds / 3600);
+    const mins = Math.floor((elapsedSeconds % 3600) / 60);
+    const secs = elapsedSeconds % 60;
+    const timeStr = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-export async function updateTimerNotification(elapsedSeconds: number, goalTitle?: string) {
     await notifee.displayNotification({
         id: NOTIFICATION_ID,
-        title: '🔥 Focus Session Active',
-        body: `${formatTime(elapsedSeconds)} ${goalTitle ? `• ${goalTitle.substring(0, 30)}` : ''}`,
+        title: '🔥 Focus Session',
+        body: goalTitle ? `Working on: ${goalTitle.substring(0, 30)}` : 'Stay focused!',
         android: {
             channelId: CHANNEL_ID,
-            category: AndroidCategory.PROGRESS,
-            importance: AndroidImportance.LOW,
+            category: AndroidCategory.SERVICE,
+            importance: AndroidImportance.DEFAULT,
             ongoing: true,
+            onlyAlertOnce: true,
+            smallIcon: 'ic_launcher',
+            color: '#EF4444',
+            // CHRONOMETER - This makes the timer count up live!
+            chronometerDirection: 'up',
+            showChronometer: true,
+            timestamp: startTimeMs,
             pressAction: {
                 id: 'default',
+                launchActivity: 'default',
             },
             actions: [
                 {
-                    title: 'End Session',
+                    title: '⏹️ Stop',
                     pressAction: {
                         id: 'stop',
                     },
                 },
             ],
-        },
-        ios: {
-            categoryId: 'timer',
         },
     });
 }
@@ -86,7 +70,7 @@ export async function cancelTimerNotification() {
     await notifee.cancelNotification(NOTIFICATION_ID);
 }
 
-// Setup foreground event handler
+// Setup foreground event handler - returns unsubscribe function
 export function setupNotificationListeners(onStop: () => void) {
     return notifee.onForegroundEvent(({ type, detail }) => {
         if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop') {
@@ -95,12 +79,32 @@ export function setupNotificationListeners(onStop: () => void) {
     });
 }
 
-// Background event handler (needs to be called at app entry point)
-export function setupBackgroundHandler(onStop: () => void) {
+// Background event handler - call this at app startup
+export function registerBackgroundHandler() {
     notifee.onBackgroundEvent(async ({ type, detail }) => {
         if (type === EventType.ACTION_PRESS && detail.pressAction?.id === 'stop') {
-            onStop();
             await cancelTimerNotification();
         }
     });
+}
+
+// For iOS: Start a timer to update notification every second while in background
+let iosUpdateInterval: ReturnType<typeof setInterval> | null = null;
+
+export function startIOSBackgroundUpdates(startTimeMs: number, goalTitle?: string) {
+    if (Platform.OS !== 'ios') return;
+
+    // Update notification every second for iOS
+    iosUpdateInterval = setInterval(() => {
+        if (AppState.currentState !== 'active') {
+            showOrUpdateTimerNotification(startTimeMs, goalTitle);
+        }
+    }, 1000);
+}
+
+export function stopIOSBackgroundUpdates() {
+    if (iosUpdateInterval) {
+        clearInterval(iosUpdateInterval);
+        iosUpdateInterval = null;
+    }
 }
