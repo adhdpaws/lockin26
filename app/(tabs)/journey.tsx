@@ -21,6 +21,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import { Milestone } from '../../types';
+import { JourneySprite, SpriteMood } from '../../components/dashboard/JourneySprite';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BALL_RADIUS = 30;
@@ -313,7 +314,8 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
   // Initialize positions
   // Goal is index 0 in our physics arrays
   const items = [
-    { id: 'goal', title: goalTitle, type: 'GOAL', radius: GOAL_RADIUS },
+    { id: 'goal', title: goalTitle, type: 'GOAL', radius: GOAL_RADIUS }, // 0
+    { id: 'me', title: '', type: 'SPRITE', radius: 20 },                  // 1 (The Sprite)
     ...milestones.map(m => ({ ...m, type: 'MILESTONE', radius: BALL_RADIUS }))
   ];
 
@@ -328,7 +330,9 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
     isCompleted: item.type === 'MILESTONE' && (item as any).status === 'COMPLETED',
     growthStage: useSharedValue(0),
     doomed: useSharedValue(0),
-    deathTimer: useSharedValue(0)
+    deathTimer: useSharedValue(0),
+    mood: useSharedValue<SpriteMood>('IDLE'),
+    moodTimer: useSharedValue(0)
   }));
 
   useFrameCallback((frameInfo) => {
@@ -342,6 +346,26 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
     for (let i = 0; i < positions.length; i++) {
       const p = positions[i];
       if (p.active.value === 0) continue;
+
+      // --- SPRITE MOOD LOGIC (p is the Sprite?) ---
+      // items[1] is the sprite.
+      if (i === 1) { // We know index 1 is SPRITE based on items array
+        const speed = Math.sqrt(p.vx.value ** 2 + p.vy.value ** 2);
+
+        // Mood Decay (Reset to IDLE after time)
+        if (p.mood.value !== 'IDLE') {
+          p.moodTimer.value -= dt;
+          if (p.moodTimer.value <= 0) {
+            p.mood.value = 'IDLE';
+          }
+        } else {
+          // Speed Based Mood
+          if (speed > 500) {
+            p.mood.value = 'SCARED';
+            p.moodTimer.value = 0.5; // Short burst
+          }
+        }
+      }
 
       // Handle Doomed State (Struggle before death)
       if (p.doomed.value === 1) {
@@ -499,6 +523,32 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
             p2.vx.value -= impulseX / m2;
             p2.vy.value -= impulseY / m2;
 
+            // --- COLLISION REACTION (If one is Sprite) ---
+            const impactForce = Math.abs(velAlongNormal);
+            // Check if p or p2 is sprite (index 1)
+            // We need to know indices. But here we have references.
+            // Actually, we are in loops i (p) and j (p2).
+            const spriteIndex = 1;
+
+            if (i === spriteIndex || j === spriteIndex) {
+              const sprite = i === spriteIndex ? p : p2;
+              const other = i === spriteIndex ? p2 : p;
+              const otherIdx = i === spriteIndex ? j : i;
+
+              // React!
+              if (impactForce > 80) {
+                if (otherIdx === 0 || (items[otherIdx] as any).status === 'COMPLETED') { // Hit Goal or Completed
+                  sprite.mood.value = 'HAPPY';
+                  sprite.moodTimer.value = 1.5;
+                } else if (impactForce > 300) { // HARD HIT
+                  sprite.mood.value = 'DIZZY';
+                  sprite.moodTimer.value = 2.0;
+                } else {
+                  // Default Wince? or kept as IDLE
+                }
+              }
+            }
+
             // Special Growth Logic for Completed Milestones hitting Goal
             if (i === 0 && p2.isCompleted && p2.r.value < MAX_MILESTONE_RADIUS) {
               // Only grow if impact is significant (avoid little touches)
@@ -523,17 +573,32 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
 
   return (
     <>
-      {items.map((item, i) => (
-        <Ball
-          key={item.id}
-          x={positions[i].x}
-          y={positions[i].y}
-          r={positions[i].r}
-          scale={positions[i].scale}
-          color={item.type === 'GOAL' ? '#000000' : (item as any).status === 'COMPLETED' ? '#FF3B30' : '#E5E7EB'}
-          label={item.title}
-        />
-      ))}
+      {items.map((item, i) => {
+        if (item.type === 'SPRITE') {
+          return (
+            <JourneySprite
+              key={item.id}
+              x={positions[i].x}
+              y={positions[i].y}
+              r={positions[i].r}
+              vx={positions[i].vx}
+              vy={positions[i].vy}
+              mood={positions[i].mood as any}
+            />
+          );
+        }
+        return (
+          <Ball
+            key={item.id}
+            x={positions[i].x}
+            y={positions[i].y}
+            r={positions[i].r}
+            scale={positions[i].scale}
+            color={item.type === 'GOAL' ? '#000000' : (item as any).status === 'COMPLETED' ? '#FF3B30' : '#E5E7EB'}
+            label={item.title}
+          />
+        );
+      })}
     </>
   );
 }
