@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Milestone } from '../types';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
+import { FocusLogSprite } from '../components/dashboard/FocusLogSprite';
 
 export default function WarPathScreen() {
     const router = useRouter();
@@ -120,17 +121,20 @@ export default function WarPathScreen() {
                                 {/* Timeline Spine */}
                                 <View className="items-center">
                                     {/* Node */}
-                                    <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' :
-                                        isActive ? 'bg-white border-swiss-red' : 'bg-white border-gray-200'
-                                        }`}>
-                                        {isCompleted ? (
-                                            <Ionicons name="checkmark" size={16} color="white" />
-                                        ) : (
-                                            <Text className={`font-bold text-xs ${isActive ? 'text-swiss-red' : 'text-gray-400'}`}>
-                                                {index + 1}
-                                            </Text>
-                                        )}
-                                    </View>
+                                    {isActive ? (
+                                        <FocusLogSprite index={index} />
+                                    ) : (
+                                        <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' : 'bg-white border-gray-200'
+                                            }`}>
+                                            {isCompleted ? (
+                                                <Ionicons name="checkmark" size={16} color="white" />
+                                            ) : (
+                                                <Text className="font-bold text-xs text-gray-400">
+                                                    {index + 1}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    )}
                                     {/* Line */}
                                     {!isLast && (
                                         <View className={`w-0.5 flex-1 my-1 ${isCompleted ? 'bg-swiss-red' : 'bg-gray-200'

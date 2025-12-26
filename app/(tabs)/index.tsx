@@ -5,8 +5,20 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { DateWidget } from '../../components/dashboard/DateWidget';
-import { DayProgressWidget } from '../../components/dashboard/DayProgressWidget';
-import { YearProgressWidget } from '../../components/dashboard/YearProgressWidget';
+import { DayProgressWidgetCat } from '../../components/dashboard/DayProgressWidgetCat';
+// ... imports
+
+// Inside the component return:
+{/* Top Row Widgets */ }
+<View className="flex-row gap-4 mb-6">
+  <DateWidget />
+  <DayProgressWidgetCat />
+</View>
+{/* Year Progress Widget */ }
+<View className="mb-8">
+  <YearProgressWidgetCat />
+</View>
+import { YearProgressWidgetCat } from '../../components/dashboard/YearProgressWidgetCat';
 import { MotivationCard } from '../../components/dashboard/MotivationCard';
 import { MilestoneCard } from '../../components/dashboard/MilestoneCard';
 import { MilestoneStack } from '../../components/dashboard/MilestoneStack';
@@ -230,7 +242,7 @@ export default function Dashboard() {
         {/* Top Row Widgets */}
         <View className="flex-row gap-4 mb-6">
           <DateWidget />
-          <DayProgressWidget />
+          <DayProgressWidgetCat />
         </View>
 
         {/* War Path Summary Widget */}
@@ -284,7 +296,7 @@ export default function Dashboard() {
 
         {/* Year Progress Widget */}
         <View className="mb-8">
-          <YearProgressWidget />
+          <YearProgressWidgetCat />
         </View>
 
         {/* Motivation Section */}
