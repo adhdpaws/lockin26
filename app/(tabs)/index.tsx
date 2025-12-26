@@ -201,6 +201,12 @@ export default function Dashboard() {
           </View>
           <View className="flex-row gap-3">
             <TouchableOpacity
+              onPress={() => router.push('/focus-timer')}
+              className="bg-black rounded-full p-3"
+            >
+              <Ionicons name="timer-outline" size={20} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => router.push('/shiny-object')}
               className="bg-gray-50 rounded-full p-3"
             >
