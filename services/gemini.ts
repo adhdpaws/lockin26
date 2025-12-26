@@ -43,7 +43,7 @@ export async function testApiKey(key: string): Promise<{ valid: boolean; error?:
   try {
     const ai = new GoogleGenAI({ apiKey: key });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: 'Say "OK" in one word.',
     });
     return { valid: !!response.text };
@@ -71,7 +71,7 @@ export async function generateWithGemini(prompt: string, customKey?: string): Pr
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
     return response.text || '';
@@ -176,7 +176,7 @@ export const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: contents,
       config: {
         responseMimeType: "application/json",
@@ -220,7 +220,7 @@ export const generateTodosForMilestone = async (milestoneTitle: string, goalTitl
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -252,7 +252,7 @@ export const analyzeShinyObject = async (currentGoal: LockedGoal, newIdea: strin
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -275,7 +275,7 @@ export const getDailyMotivation = async (goal: LockedGoal): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3-flash-preview',
       contents: `Give me a very short, punchy, slightly intense motivational quote tailored to someone working on: "${goal.title}". Max 15 words. No cliches.`,
     });
     return response.text || "Keep pushing.";
