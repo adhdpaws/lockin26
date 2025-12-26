@@ -43,9 +43,9 @@ function WarRoomHeader() {
           <Ionicons name="close" size={24} color="black" />
         </TouchableOpacity>
         <View className="items-center">
-          <Text className="font-black text-lg tracking-tighter">WAR ROOM</Text>
+          <Text className="font-black text-lg tracking-tighter">FOCUS ZONE</Text>
           <PulsingText className="font-bold text-[10px] text-swiss-red tracking-[0.2em]">
-            {draftStack.length > 0 ? `${draftStack.length} MISSIONS STAGED` : 'LIVE UPLINK'}
+            {draftStack.length > 0 ? `${draftStack.length} STEPS STAGED` : 'LIVE UPLINK'}
           </PulsingText>
         </View>
         <TouchableOpacity

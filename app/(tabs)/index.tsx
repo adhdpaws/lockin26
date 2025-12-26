@@ -197,7 +197,7 @@ export default function Dashboard() {
         <View className="flex-row justify-between items-center mb-8">
           <View>
             <Text className="font-black text-2xl tracking-tighter">LOCKIN {new Date().getFullYear()}</Text>
-            <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">COMMAND CENTER</Text>
+            <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">FOCUS DASHBOARD</Text>
           </View>
           <View className="flex-row gap-3">
             <TouchableOpacity
@@ -213,7 +213,7 @@ export default function Dashboard() {
               <Ionicons name="scan-outline" size={20} color="black" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push('/war-room')}
+              onPress={() => router.push('/focus-zone')}
               className="bg-swiss-red rounded-full p-3"
             >
               <Ionicons name="add" size={20} color="white" />
@@ -238,7 +238,7 @@ export default function Dashboard() {
           onPress={() => router.push('/war-path')}
           className="mb-8"
         >
-          <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">WAR PATH</Text>
+          <Text className="font-bold text-xs text-gray-400 tracking-widest mb-4 ml-2">FOCUS PATH</Text>
           <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex-row justify-between items-center">
             <View className="flex-row items-center gap-4">
               <View className="w-12 h-12 bg-swiss-red rounded-xl items-center justify-center shadow-sm">
@@ -247,9 +247,9 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View>
-                <Text className="font-black text-lg">CAMPAIGN LOG</Text>
+                <Text className="font-black text-lg">FOCUS LOG</Text>
                 <Text className="text-xs text-gray-500 font-medium">
-                  {milestoneStack.length} Missions Scheduled
+                  {milestoneStack.length} Milestones Scheduled
                 </Text>
               </View>
             </View>
@@ -262,8 +262,8 @@ export default function Dashboard() {
         {/* Primary Action: Milestone */}
         {isGenerating ? (
           <View className="bg-black p-6 rounded-[32px] mb-8 min-h-[300px] items-center justify-center">
-            <Text className="text-white font-bold text-lg mb-2">GENERATING BATTLE PLAN...</Text>
-            <Text className="text-gray-400 text-xs tracking-widest">ANALYZING VICTORY PATH</Text>
+            <Text className="text-white font-bold text-lg mb-2">GENERATING FOCUS PLAN...</Text>
+            <Text className="text-gray-400 text-xs tracking-widest">ANALYZING FOCUS PATH</Text>
           </View>
         ) : (
           <MilestoneCard
@@ -275,7 +275,7 @@ export default function Dashboard() {
                   params: { milestone: JSON.stringify(activeMilestone) }
                 });
               } else {
-                router.push('/war-room');
+                router.push('/focus-zone');
               }
             }}
             onComplete={handleCompleteMilestone}

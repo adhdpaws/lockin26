@@ -26,7 +26,7 @@ export default function WarPathScreen() {
                 setMilestones(JSON.parse(savedStack));
             }
         } catch (e) {
-            console.error('Failed to load war path', e);
+            console.error('Failed to load focus path', e);
         } finally {
             setLoading(false);
         }
@@ -53,7 +53,7 @@ export default function WarPathScreen() {
                         });
 
                         await Sharing.shareAsync(uri, {
-                            dialogTitle: 'Share your Victory',
+                            dialogTitle: 'Share your Success',
                             mimeType: 'image/png',
                             UTI: 'public.png'
                         });
@@ -80,10 +80,7 @@ export default function WarPathScreen() {
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
                 <View className="items-center">
-                    <Text className="font-black text-lg tracking-tight">WAR PATH</Text>
-                    <Text className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase">
-                        Campaign Log
-                    </Text>
+                    <Text className="font-black text-lg tracking-tight">FOCUS LOG</Text>
                 </View>
                 <View style={{ width: 40 }} />
             </View>
@@ -93,13 +90,13 @@ export default function WarPathScreen() {
                 <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm border border-gray-200">
                     <View className="flex-row justify-between items-end mb-4">
                         <View>
-                            <Text className="text-gray-400 text-xs font-bold tracking-widest mb-1">CAMPAIGN PROGRESS</Text>
+                            <Text className="text-gray-400 text-xs font-bold tracking-widest mb-1">FOCUS PROGRESS</Text>
                             <Text className="text-black text-4xl font-black">
                                 {Math.round(progress)}%
                             </Text>
                         </View>
                         <View className="bg-red-50 px-3 py-1 rounded-full">
-                            <Text className="text-swiss-red text-xs font-bold">{completedCount} / {totalCount} MISSIONS</Text>
+                            <Text className="text-swiss-red text-xs font-bold">{completedCount} / {totalCount} MILESTONES</Text>
                         </View>
                     </View>
                     {/* Progress Bar */}
@@ -197,8 +194,8 @@ export default function WarPathScreen() {
                 collapsable={false}
             >
                 <View>
-                    <Text className="text-white font-black text-2xl tracking-widest mb-2">MISSION</Text>
-                    <Text className="text-white/80 font-bold text-lg tracking-widest">ACCOMPLISHED</Text>
+                    <Text className="text-white font-black text-2xl tracking-widest mb-2">MILESTONE</Text>
+                    <Text className="text-white/80 font-bold text-lg tracking-widest">COMPLETE</Text>
                 </View>
 
                 <View>
@@ -216,7 +213,7 @@ export default function WarPathScreen() {
                 <View className="border-t border-white/30 pt-8 flex-row justify-between items-center">
                     <View>
                         <Text className="text-white font-black text-xl tracking-tighter">LOCKIN 2026</Text>
-                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.2em]">COMMAND CENTER</Text>
+                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.2em]">FOCUS DASHBOARD</Text>
                     </View>
                     <View className="w-12 h-12 bg-white rounded-full items-center justify-center">
                         <Ionicons name="checkmark-sharp" size={32} color="#FF3B30" />

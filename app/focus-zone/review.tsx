@@ -70,7 +70,7 @@ export default function ReviewDeploymentScreen() {
                 <TouchableOpacity onPress={() => router.back()}>
                     <Ionicons name="arrow-back" size={24} color="black" />
                 </TouchableOpacity>
-                <Text className="font-black text-lg">REVIEW FLIGHT PLAN</Text>
+                <Text className="font-black text-lg">REVIEW PLAN</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -80,7 +80,7 @@ export default function ReviewDeploymentScreen() {
                 </Text>
 
                 {draftStack.length === 0 ? (
-                    <Text className="text-gray-400 text-center mt-10">No missions staged.</Text>
+                    <Text className="text-gray-400 text-center mt-10">No steps staged.</Text>
                 ) : (
                     draftStack.map((milestone, index) => (
                         <View key={milestone.id} className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex-row items-start gap-4 shadow-sm">
@@ -174,7 +174,7 @@ export default function ReviewDeploymentScreen() {
                     className={`py-4 rounded-xl items-center flex-row justify-center gap-2 ${draftStack.length > 0 ? 'bg-swiss-red' : 'bg-gray-300'
                         }`}
                 >
-                    <Text className="text-white font-black tracking-wide">CONFIRM & DEPLOY</Text>
+                    <Text className="text-white font-black tracking-wide">CONFIRM & START</Text>
                     <Ionicons name="checkmark-done" size={20} color="white" />
                 </TouchableOpacity>
             </View>

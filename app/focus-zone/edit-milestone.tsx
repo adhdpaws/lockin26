@@ -60,7 +60,7 @@ export default function EditMilestoneScreen() {
                     <TouchableOpacity onPress={() => router.back()}>
                         <Text className="text-gray-500 font-bold text-base">Cancel</Text>
                     </TouchableOpacity>
-                    <Text className="font-black text-lg">EDIT INTEL</Text>
+                    <Text className="font-black text-lg">EDIT STEP</Text>
                     <TouchableOpacity onPress={handleSave}>
                         <Text className="text-blue-600 font-bold text-base">Save</Text>
                     </TouchableOpacity>
@@ -69,16 +69,16 @@ export default function EditMilestoneScreen() {
 
             <View className="flex-1 bg-gray-50 p-6 pt-10">
                 <View className="bg-white p-6 rounded-2xl shadow-sm mb-6">
-                    <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">OBJECTIVE</Text>
+                    <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">GOAL</Text>
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
                         className="font-black text-xl mb-4 border-b border-gray-100 pb-2"
-                        placeholder="Mission Title"
+                        placeholder="Step Title"
                         multiline
                     />
 
-                    <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest mt-4">STRATEGY</Text>
+                    <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest mt-4">DETAILS</Text>
                     <TextInput
                         value={description}
                         onChangeText={setDescription}

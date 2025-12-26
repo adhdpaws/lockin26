@@ -71,7 +71,7 @@ export default function ManualEntry() {
             className="flex-1 bg-white"
         >
             <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 40 }}>
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MISSION TITLE</Text>
+                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MANUAL INPUT</Text>
                 <TextInput
                     className="bg-gray-50 p-4 rounded-xl font-bold text-lg mb-6"
                     placeholder="e.g. Launch MVP"
@@ -143,7 +143,7 @@ export default function ManualEntry() {
                     className={`py-4 rounded-xl items-center ${manualTitle.trim() ? 'bg-swiss-red' : 'bg-gray-200'
                         }`}
                 >
-                    <Text className="text-white font-bold tracking-widest">ADD TO STACK</Text>
+                    <Text className="text-white font-bold tracking-widest">ADD TO FOCUS ZONE</Text>
                 </TouchableOpacity>
             </ScrollView>
         </KeyboardAvoidingView>

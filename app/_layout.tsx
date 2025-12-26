@@ -43,7 +43,7 @@ export default function RootLayout() {
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(focus)" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
-          <Stack.Screen name="war-room" options={{ headerShown: false }} />
+          <Stack.Screen name="focus-zone" options={{ headerShown: false }} />
           <Stack.Screen name="war-path" options={{ headerShown: false }} />
           <Stack.Screen name="tactical-plan" options={{ presentation: 'modal', headerTitle: 'Tactical Plan' }} />
           <Stack.Screen name="shiny-object" options={{ presentation: 'modal', headerTitle: 'Shiny Object Detector' }} />

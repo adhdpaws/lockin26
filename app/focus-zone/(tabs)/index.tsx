@@ -18,13 +18,11 @@ export default function TacticalBoard() {
   const [hasGenerated, setHasGenerated] = useState(false);
 
   useEffect(() => {
-    if (isReady && !hasGenerated && goal && draftOptions.length === 0) {
-      handleGenerate();
-    } else if (draftOptions.length > 0) {
-      // If we have options (e.g. returning from edit), don't regenerate automatically
+    // Auto-generation disabled to save costs
+    if (draftOptions.length > 0) {
       setHasGenerated(true);
     }
-  }, [isReady, goal]);
+  }, [draftOptions]);
 
   const handleGenerate = async () => {
     if (!goal) return;
@@ -54,7 +52,7 @@ export default function TacticalBoard() {
 
   const openEditScreen = (milestone: Milestone) => {
     router.push({
-      pathname: '/war-room/edit-milestone',
+      pathname: '/focus-zone/edit-milestone',
       params: { id: milestone.id }
     });
   };
@@ -74,7 +72,7 @@ export default function TacticalBoard() {
       return [...prev, ...distinctive];
     });
 
-    router.push('/war-room/review');
+    router.push('/focus-zone/review');
   };
 
   return (
@@ -82,14 +80,14 @@ export default function TacticalBoard() {
       {/* Header */}
       <View className="px-6 pt-12 pb-6 border-b border-gray-100 flex-row justify-between items-center">
         <View>
-          <Text className="text-xs font-bold text-gray-400 tracking-widest mb-1">TACTICAL COMMAND</Text>
-          <Text className="text-2xl font-black">NEXT MOVES</Text>
+          <Text className="text-xs font-bold text-gray-400 tracking-widest mb-1">FOCUS HUB</Text>
+          <Text className="text-2xl font-black">NEXT STEPS</Text>
         </View>
         {!isReady ? (
           <ActivityIndicator size="small" color="#CA8A04" />
         ) : (
-          <View className="bg-green-100 px-3 py-1 rounded-full">
-            <Text className="text-[10px] font-bold text-green-800">SYSTEM ONLINE</Text>
+          <View className="bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+            <Text className="text-[10px] font-bold text-gray-600">SYSTEM ONLINE</Text>
           </View>
         )}
       </View>
@@ -98,13 +96,27 @@ export default function TacticalBoard() {
         {isLoading ? (
           <View className="mt-20 items-center">
             <ActivityIndicator size="large" color="black" />
-            <Text className="mt-4 font-bold text-gray-400 tracking-widest">ANALYZING BATTLEFIELD...</Text>
+            <Text className="mt-4 font-bold text-gray-400 tracking-widest">ANALYZING PRIORITIES...</Text>
+          </View>
+        ) : draftOptions.length === 0 ? (
+          <View className="mt-10 items-center">
+            <Text className="text-gray-400 text-center mb-6 leading-6 font-medium">
+              Ready to analyze "{goal?.title}".{'\n'}
+              Generate tactical steps to move forward.
+            </Text>
+            <TouchableOpacity
+              onPress={handleGenerate}
+              className="bg-black py-4 px-8 rounded-xl flex-row items-center gap-2"
+            >
+              <Ionicons name="flash" size={18} color="white" />
+              <Text className="text-white font-bold tracking-widest">GENERATE NEXT STEPS</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <>
             <Text className="text-xs font-medium text-gray-500 mb-6 leading-5">
               Analyzing objective "{goal?.title}".{'\n'}
-              Select tactical maneuvers to deploy to your stack.
+              Select actionable steps to deploy to your stack.
             </Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8" style={{ overflow: 'visible' }}>

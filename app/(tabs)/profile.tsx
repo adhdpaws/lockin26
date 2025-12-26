@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, Switch, TextInput, ActivityIndicator, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -66,9 +66,9 @@ export default function Profile() {
 
   const getProviderColor = () => {
     switch (aiProvider) {
-      case 'ondevice': return '#10B981'; // green
-      case 'gemini': return '#3B82F6'; // blue
-      case 'gemini-custom': return '#8B5CF6'; // purple
+      case 'ondevice': return '#525252'; // gray
+      case 'gemini': return '#525252'; // gray
+      case 'gemini-custom': return '#000000'; // black
       default: return '#EF4444'; // red
     }
   };
@@ -177,15 +177,15 @@ export default function Profile() {
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 24 }}>
         {/* Header */}
         <View className="mb-8">
-          <Text className="font-black text-2xl tracking-tighter">OPERATOR PROFILE</Text>
-          <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">SYSTEM CONFIGURATION</Text>
+          <Text className="font-black text-2xl tracking-tighter">FOCUS PROFILE</Text>
+          <Text className="font-bold text-[10px] text-gray-400 tracking-[0.2em]">SETTINGS</Text>
         </View>
 
         {/* Mission Card */}
         <View className="bg-swiss-red p-6 rounded-2xl mb-8 shadow-lg shadow-red-200">
           <View className="flex-row justify-between items-start mb-4">
             <View>
-              <Text className="text-white/70 text-[10px] font-bold tracking-widest mb-1">CURRENT OBJECTIVE</Text>
+              <Text className="text-white/70 text-[10px] font-bold tracking-widest mb-1">CURRENT GOAL</Text>
               <Text className="text-white font-black text-xl leading-6">{goal}</Text>
             </View>
             <Ionicons name="lock-closed" size={20} color="white" />
@@ -198,7 +198,7 @@ export default function Profile() {
         <View className="flex-row gap-4 mb-8">
           <View className="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 items-center">
             <Text className="font-black text-2xl">{stats.completed}</Text>
-            <Text className="text-[10px] font-bold text-gray-400 tracking-wider text-center">MISSIONS COMPLETED</Text>
+            <Text className="text-[10px] font-bold text-gray-400 tracking-wider text-center">MILESTONES COMPLETED</Text>
           </View>
           <View className="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 items-center">
             <Text className="font-black text-2xl">{stats.daysActive}</Text>
@@ -282,7 +282,12 @@ export default function Profile() {
 
             <Text className="text-[10px] text-gray-400 mt-3 text-center">
               Get your API key from{' '}
-              <Text className="text-blue-500">aistudio.google.com</Text>
+              <Text
+                className="text-gray-500 underline"
+                onPress={() => Linking.openURL('https://aistudio.google.com')}
+              >
+                aistudio.google.com
+              </Text>
             </Text>
           </View>
         </View>

@@ -22,18 +22,18 @@ export function GreetingWidget() {
   return (
     <View className="mb-6">
       <Text className="text-gray-400 font-bold text-xs tracking-widest mb-1">
-        {greeting}, SOLDIER.
+        {greeting}
       </Text>
       <View className="flex-row items-end justify-between">
         <Text className="text-black font-black text-3xl tracking-tighter">
-          THE WAR CONTINUES.
+          THE FOCUS CONTINUES.
         </Text>
       </View>
-      
+
       {/* Day Progress Bar */}
       <View className="h-1 bg-gray-100 rounded-full mt-4 overflow-hidden">
-        <View 
-          className="h-full bg-black rounded-full" 
+        <View
+          className="h-full bg-black rounded-full"
           style={{ width: `${dayProgress}%` }}
         />
       </View>

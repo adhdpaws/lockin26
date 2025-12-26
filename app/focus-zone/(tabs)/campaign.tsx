@@ -23,8 +23,8 @@ const phaseMessages: Record<GenerationPhase, string> = {
     idle: '',
     analyzing: 'ANALYZING PROGRESS...',
     mapping: 'MAPPING REMAINING PATH...',
-    finalizing: 'DEPLOYING STRATEGY...',
-    complete: 'CAMPAIGN READY'
+    finalizing: 'FINALIZING PLAN...',
+    complete: 'ROADMAP READY'
 };
 
 function PulsingDots() {
@@ -106,7 +106,7 @@ export default function FullCampaign() {
     const handleDeploy = () => {
         if (generatedMilestones.length === 0) return;
         setDraftStack(generatedMilestones);
-        router.push('/war-room/review');
+        router.push('/focus-zone/review');
     };
 
     // Calculate campaign stats
@@ -122,20 +122,20 @@ export default function FullCampaign() {
                         <View className="bg-swiss-red rounded-[32px] p-8 w-full mb-6 shadow-lg">
                             <View className="flex-row justify-between items-start mb-6">
                                 <View className="bg-black/20 px-3 py-1 rounded-full">
-                                    <Text className="text-white font-bold text-[10px] tracking-widest">PRIORITY: STRATEGIC</Text>
+                                    <Text className="text-white font-bold text-[10px] tracking-widest">PRIORITY: HIGH</Text>
                                 </View>
                                 <View className="bg-white/20 p-2 rounded-full">
                                     <Ionicons name="rocket" size={20} color="white" />
                                 </View>
                             </View>
 
-                            <Text className="text-white/80 font-bold text-xs tracking-widest mb-2">FULL CAMPAIGN</Text>
+                            <Text className="text-white/80 font-bold text-xs tracking-widest mb-2">FULL ROADMAP</Text>
                             <Text className="text-white font-black text-3xl leading-9 mb-4">
-                                YEAR PLAN
+                                YEAR GOALS
                             </Text>
                             <Text className="text-white/90 font-medium text-sm leading-5 mb-8">
                                 One tap. Complete roadmap.{'\n'}
-                                AI maps every milestone from now to victory.
+                                AI maps every milestone from now to success.
                             </Text>
 
                             <TouchableOpacity
@@ -154,7 +154,7 @@ export default function FullCampaign() {
                                     <>
                                         <Ionicons name="flash" size={16} color="#EF4444" />
                                         <Text className="text-swiss-red font-black tracking-widest">
-                                            GENERATE YEAR PLAN
+                                            GENERATE ROADMAP
                                         </Text>
                                     </>
                                 )}
@@ -179,19 +179,19 @@ export default function FullCampaign() {
 
                         {/* Existing Progress Indicator */}
                         {existingMilestones.length > 0 && (
-                            <View className="bg-green-50 rounded-xl p-4 w-full border border-green-100">
+                            <View className="bg-gray-100 rounded-xl p-4 w-full border border-gray-200">
                                 <View className="flex-row items-center gap-2 mb-2">
-                                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                                    <Text className="text-[10px] font-bold text-green-700 tracking-widest">
+                                    <Ionicons name="checkmark-circle" size={16} color="black" />
+                                    <Text className="text-[10px] font-bold text-gray-700 tracking-widest">
                                         EXISTING PROGRESS DETECTED
                                     </Text>
                                 </View>
-                                <Text className="text-sm text-green-800">
+                                <Text className="text-sm text-gray-800">
                                     <Text className="font-black">{existingMilestones.filter(m => m.status === 'COMPLETED').length}</Text> completed, {' '}
                                     <Text className="font-black">{existingMilestones.filter(m => m.status === 'ACTIVE').length}</Text> active, {' '}
                                     <Text className="font-black">{existingMilestones.filter(m => m.status === 'PENDING').length}</Text> pending
                                 </Text>
-                                <Text className="text-xs text-green-600 mt-1">
+                                <Text className="text-xs text-gray-500 mt-1">
                                     AI will analyze this and generate only what's needed.
                                 </Text>
                             </View>
@@ -219,7 +219,7 @@ export default function FullCampaign() {
                         {/* Summary Header */}
                         <View className="bg-white rounded-2xl p-5 mb-6 border border-gray-100">
                             <View className="flex-row justify-between items-center mb-4">
-                                <Text className="font-black text-lg">CAMPAIGN OVERVIEW</Text>
+                                <Text className="font-black text-lg">ROADMAP OVERVIEW</Text>
                                 <View className="bg-swiss-red px-3 py-1 rounded-full">
                                     <Text className="text-white text-xs font-black">
                                         {generatedMilestones.length} MISSIONS
@@ -279,7 +279,7 @@ export default function FullCampaign() {
                             className="flex-[2] bg-swiss-red py-4 rounded-xl items-center justify-center flex-row gap-2"
                         >
                             <Text className="text-white font-black tracking-wide">
-                                DEPLOY CAMPAIGN ({generatedMilestones.length})
+                                START ROADMAP ({generatedMilestones.length})
                             </Text>
                             <Ionicons name="arrow-forward" size={18} color="white" />
                         </TouchableOpacity>

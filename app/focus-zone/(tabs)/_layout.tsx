@@ -1,6 +1,5 @@
 import { withLayoutContext } from 'expo-router';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { Navigator } = createMaterialTopTabNavigator();
 
@@ -18,8 +17,8 @@ export default function WarRoomTabsLayout() {
                 tabBarInactiveTintColor: '#9CA3AF',
             }}
         >
-            <MaterialTopTabs.Screen name="index" options={{ title: 'STRATEGIST' }} />
-            <MaterialTopTabs.Screen name="campaign" options={{ title: 'FULL CAMPAIGN' }} />
+            <MaterialTopTabs.Screen name="index" options={{ title: 'QUICK ACTIONS' }} />
+            <MaterialTopTabs.Screen name="campaign" options={{ title: 'FULL ROADMAP' }} />
             <MaterialTopTabs.Screen name="manual" options={{ title: 'MANUAL' }} />
         </MaterialTopTabs>
     );
