@@ -20,11 +20,12 @@ type MockingPhase = 'LAUGH' | 'SHOUT' | 'CLAP';
 interface ScannerSpriteProps {
     state: ScannerState;
     mockeryText?: string;
+    showLabels?: boolean;
 }
 
 const DEFAULT_INSULTS = ["Bruh.", "Seriously?", "Nah.", "Try Again.", "Weak."];
 
-export function ScannerSprite({ state, mockeryText }: ScannerSpriteProps) {
+export function ScannerSprite({ state, mockeryText, showLabels = true }: ScannerSpriteProps) {
     // Shared Values
     const float = useSharedValue(0);
     const pupilX = useSharedValue(0);
@@ -215,14 +216,14 @@ export function ScannerSprite({ state, mockeryText }: ScannerSpriteProps) {
         <View className="items-center justify-center h-48 w-full pointer-events-none overflow-visible">
 
             {/* Mocking Text */}
-            {state === 'MOCKING' && (
+            {showLabels && state === 'MOCKING' && (
                 <Animated.View entering={FadeIn} className="absolute -top-6 w-full items-center z-0">
                     <Text className="font-black text-4xl text-gray-100 uppercase tracking-tighter text-center opacity-50">{insult}</Text>
                 </Animated.View>
             )}
 
             {/* Approved Text */}
-            {state === 'APPROVED' && (
+            {showLabels && state === 'APPROVED' && (
                 <Animated.View entering={ZoomIn} className="absolute -top-6 w-full items-center z-0">
                     <Text className="font-black text-4xl text-green-50 uppercase tracking-tighter text-center">ALIGNED</Text>
                 </Animated.View>

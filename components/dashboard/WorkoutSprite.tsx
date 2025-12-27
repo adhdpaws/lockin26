@@ -283,11 +283,12 @@ function BoxingAnim({ sweatStyle }: any) {
             </View>
 
             {/* Gloves */}
-            <Animated.View style={[leftGlove]} className="absolute -left-6 w-8 h-8 bg-red-600 rounded-full border-2 border-white" />
+            {/* Left Glove (Guard Position - Raised) */}
+            <Animated.View style={[leftGlove]} className="absolute -left-6 -top-2 w-8 h-8 bg-red-600 rounded-full border-2 border-white z-20" />
             <Animated.View style={[rightGlove]} className="absolute -right-6 w-8 h-8 bg-red-600 rounded-full border-2 border-white" />
 
             {/* Bag (imaginary target) */}
-            <Animated.View style={sweatStyle} className="absolute right-10"><Text>💥</Text></Animated.View>
+            {/* Spark removed */}
 
         </View>
     );
@@ -316,10 +317,11 @@ function KettlebellAnim({ sweatStyle }: any) {
                 </View>
             </View>
 
-            {/* Swinging Kettlebell */}
-            <Animated.View style={[armStyle, { position: 'absolute', top: 20, zIndex: 20 } as any]}>
+            {/* Swinging Kettlebell (Refactored for perfect centering) */}
+            <Animated.View style={[armStyle, { position: 'absolute', top: 20, zIndex: 20, alignItems: 'center' } as any]}>
                 <View className="w-1 h-12 bg-black" />
-                <View className="w-10 h-10 bg-gray-800 rounded-full absolute -bottom-8 -left-4.5 border border-gray-600" />
+                {/* Ball flows naturally below handle, centered by parent items-center */}
+                <View className="w-10 h-10 bg-gray-800 rounded-full -mt-1 border border-gray-600" />
             </Animated.View>
 
             <Animated.View style={sweatStyle} className="absolute -right-4 top-0"><Text>💦</Text></Animated.View>

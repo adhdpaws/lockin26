@@ -19,6 +19,7 @@ import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { WorkoutSprite } from '../components/dashboard/WorkoutSprite';
+import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 
 type TimerState = 'idle' | 'active' | 'complete';
 
@@ -256,11 +257,16 @@ export default function FocusTimerScreen() {
                                     <Text className="text-white/60 font-bold text-xs tracking-[0.3em] mb-2">
                                         FOCUS SESSION
                                     </Text>
-                                    <View className="flex-row items-center gap-2 mb-6">
+                                    <View className="flex-row items-center gap-2 mb-2">
                                         <Ionicons name="flame" size={24} color="white" />
                                         <Text className="text-white font-black text-5xl">
                                             {formatDuration(elapsedSeconds)}
                                         </Text>
+                                    </View>
+
+                                    {/* Celebration Sprite */}
+                                    <View className="mb-6 scale-75">
+                                        <ScannerSprite state="APPROVED" />
                                     </View>
 
                                     <Text className="text-white font-medium text-lg text-center italic leading-6 mb-6">

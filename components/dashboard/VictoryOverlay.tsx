@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import Animated, { FadeIn, ZoomIn, SlideInDown } from 'react-native-reanimated';
+import { ScannerSprite } from './ScannerSprite';
 import { Ionicons } from '@expo/vector-icons';
 
 interface VictoryOverlayProps {
@@ -17,9 +18,9 @@ export function VictoryOverlay({ visible, onClose }: VictoryOverlayProps) {
         >
           <Animated.View
             entering={SlideInDown.delay(200)}
-            className="bg-white w-20 h-20 rounded-full items-center justify-center mb-6"
+            className="items-center justify-center mb-6 scale-90"
           >
-            <Ionicons name="checkmark" size={40} color="#EF4444" />
+            <ScannerSprite state="APPROVED" />
           </Animated.View>
 
           <Animated.Text

@@ -9,6 +9,7 @@ import { Milestone } from '../types';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { FocusLogSprite } from '../components/dashboard/FocusLogSprite';
+import { ScannerSprite } from '../components/dashboard/ScannerSprite';
 
 export default function WarPathScreen() {
     const router = useRouter();
@@ -182,45 +183,80 @@ export default function WarPathScreen() {
                 </View>
             </ScrollView>
 
-            {/* Hidden Share Card View */}
+            {/* Hidden Share Card View (Redesigned) */}
             <View
                 style={{
                     position: 'absolute',
-                    top: 1000, // Move off-screen
+                    top: 1000,
                     left: 0,
-                    width: 400,
-                    height: 500,
+                    width: 420,
+                    height: 600,
                     backgroundColor: '#FF3B30', // Swiss Red
-                    padding: 40,
+                    padding: 32,
                     justifyContent: 'space-between'
                 }}
                 ref={shareViewRef}
                 collapsable={false}
             >
-                <View>
-                    <Text className="text-white font-black text-2xl tracking-widest mb-2">MILESTONE</Text>
-                    <Text className="text-white/80 font-bold text-lg tracking-widest">COMPLETE</Text>
-                </View>
-
-                <View>
-                    <Text className="text-white/60 font-bold text-xs tracking-[0.3em] mb-4">
-                        MILESTONE 0{shareData?.index !== undefined ? shareData.index + 1 : 0}
-                    </Text>
-                    <Text className="text-white font-black text-5xl leading-tight mb-4">
-                        {shareData?.milestone.title}
-                    </Text>
-                    <View className="bg-white/20 self-start px-4 py-2 rounded-lg">
-                        <Text className="text-white font-bold">{shareData?.milestone.deadline}</Text>
+                {/* Header Badge */}
+                <View className="flex-row justify-between items-start">
+                    <View className="bg-black/20 px-4 py-2 rounded-full backdrop-blur-md">
+                        <Text className="text-white/90 font-bold text-[10px] tracking-[0.3em] uppercase">
+                            MISSION UPDATE
+                        </Text>
+                    </View>
+                    <View className="flex-row gap-1">
+                        <View className="w-2 h-2 rounded-full bg-white/40" />
+                        <View className="w-2 h-2 rounded-full bg-white/40" />
                     </View>
                 </View>
 
-                <View className="border-t border-white/30 pt-8 flex-row justify-between items-center">
+                {/* Main Content */}
+                <View className="mt-8">
+                    <View className="flex-row items-center gap-2 mb-4">
+                        <Ionicons name="trophy" size={24} color="rgba(255,255,255,0.8)" />
+                        <Text className="text-white/80 font-bold text-sm tracking-widest uppercase">
+                            MILESTONE SECURED
+                        </Text>
+                    </View>
+
+                    <Text
+                        className="text-white font-black text-6xl leading-[60px] tracking-tight mb-8"
+                        adjustsFontSizeToFit
+                        numberOfLines={3}
+                    >
+                        {shareData?.milestone.title.toUpperCase()}
+                    </Text>
+
+                    <View className="h-1 w-20 bg-white/30 rounded-full mb-6" />
+
+                    <View className="self-start bg-white/20 px-5 py-3 rounded-xl border border-white/10">
+                        <Text className="text-white font-bold text-sm tracking-widest uppercase">
+                            {shareData?.milestone.deadline}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Footer Section */}
+                <View className="pt-8 flex-row justify-between items-end">
                     <View>
-                        <Text className="text-white font-black text-xl tracking-tighter">LOCKIN 2026</Text>
-                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.2em]">FOCUS DASHBOARD</Text>
+                        <Text className="text-white/60 text-[10px] font-bold tracking-[0.4em] mb-2 uppercase">DEPLOYED VIA</Text>
+                        <Text className="text-white font-black text-2xl tracking-tighter">LOCKIN 2026</Text>
+                        <View className="mt-1 flex-row gap-2 items-center">
+                            <View className="w-1.5 h-1.5 bg-green-300 rounded-full" />
+                            <Text className="text-white/50 text-[9px] font-bold uppercase">System Online</Text>
+                        </View>
                     </View>
-                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center">
-                        <Ionicons name="checkmark-sharp" size={32} color="#FF3B30" />
+
+                    {/* Character Stamp */}
+                    <View className="items-center justify-center -mr-4 -mb-4">
+                        <View className="scale-75">
+                            <ScannerSprite state="APPROVED" showLabels={false} />
+                        </View>
+                        {/* Custom Label since we hid internal one */}
+                        <View className="bg-white px-3 py-1 rounded-full -mt-2 border border-red-500 shadow-sm">
+                            <Text className="text-swiss-red font-black text-[10px] tracking-widest uppercase">ALIGNED</Text>
+                        </View>
                     </View>
                 </View>
             </View>
