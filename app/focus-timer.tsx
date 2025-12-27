@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import ViewShot, { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
+import { WorkoutSprite } from '../components/dashboard/WorkoutSprite';
 
 type TimerState = 'idle' | 'active' | 'complete';
 
@@ -36,41 +37,7 @@ const MOTIVATIONAL_QUOTES = [
     "This is how champions are made.",
 ];
 
-function PulsingRing() {
-    const scale = useSharedValue(1);
-    const opacity = useSharedValue(0.6);
 
-    useEffect(() => {
-        scale.value = withRepeat(
-            withSequence(
-                withTiming(1.3, { duration: 1500 }),
-                withTiming(1, { duration: 1500 })
-            ),
-            -1,
-            true
-        );
-        opacity.value = withRepeat(
-            withSequence(
-                withTiming(0.2, { duration: 1500 }),
-                withTiming(0.6, { duration: 1500 })
-            ),
-            -1,
-            true
-        );
-    }, []);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-        opacity: opacity.value
-    }));
-
-    return (
-        <Animated.View
-            style={animatedStyle}
-            className="absolute w-64 h-64 rounded-full border-4 border-swiss-red"
-        />
-    );
-}
 
 export default function FocusTimerScreen() {
     const router = useRouter();
@@ -198,15 +165,15 @@ export default function FocusTimerScreen() {
     });
 
     return (
-        <View className="flex-1 bg-black">
+        <View className="flex-1 bg-white">
             <SafeAreaView className="flex-1">
                 {/* Header */}
                 <View className="flex-row justify-between items-center px-6 py-4">
                     <TouchableOpacity onPress={handleClose} className="p-2 -ml-2">
-                        <Ionicons name="close" size={28} color="white" />
+                        <Ionicons name="close" size={28} color="black" />
                     </TouchableOpacity>
                     {timerState === 'active' && (
-                        <View className="bg-swiss-red/20 px-3 py-1 rounded-full">
+                        <View className="bg-swiss-red/10 px-3 py-1 rounded-full">
                             <Text className="text-swiss-red font-bold text-xs tracking-widest">LOCKED IN</Text>
                         </View>
                     )}
@@ -215,26 +182,30 @@ export default function FocusTimerScreen() {
                 {/* IDLE STATE */}
                 {timerState === 'idle' && (
                     <View className="flex-1 justify-center items-center px-8">
-                        <Animated.View entering={FadeInDown.delay(200)}>
-                            <Text className="text-gray-500 font-bold text-xs tracking-[0.3em] text-center mb-4">
+                        <Animated.View entering={FadeInDown.delay(200)} className="items-center">
+                            <Text className="text-gray-400 font-bold text-xs tracking-[0.3em] text-center mb-4">
                                 FOCUS SESSION
                             </Text>
-                            <Text className="text-white font-black text-5xl text-center mb-8">
+                            <Text className="text-black font-black text-5xl text-center mb-8">
                                 LOCK IN
                             </Text>
                         </Animated.View>
 
+                        <View className="mb-10">
+                            <WorkoutSprite isActive={false} />
+                        </View>
+
                         {goal && (
-                            <Animated.View entering={FadeInDown.delay(400)} className="bg-white/5 rounded-2xl px-6 py-4 mb-12">
+                            <Animated.View entering={FadeInDown.delay(400)} className="bg-gray-50 rounded-2xl px-6 py-4 mb-12 border border-gray-100">
                                 <Text className="text-gray-400 font-bold text-[10px] tracking-widest mb-1">WORKING ON</Text>
-                                <Text className="text-white font-bold text-base" numberOfLines={2}>{goal}</Text>
+                                <Text className="text-black font-bold text-base" numberOfLines={2}>{goal}</Text>
                             </Animated.View>
                         )}
 
                         <Animated.View entering={ZoomIn.delay(600)}>
                             <TouchableOpacity
                                 onPress={handleStart}
-                                className="bg-swiss-red w-40 h-40 rounded-full items-center justify-center"
+                                className="bg-swiss-red w-40 h-40 rounded-full items-center justify-center shadow-lg shadow-swiss-red/30"
                             >
                                 <Ionicons name="play" size={60} color="white" />
                                 <Text className="text-white font-black text-xs tracking-widest mt-2">START</Text>
@@ -246,19 +217,22 @@ export default function FocusTimerScreen() {
                 {/* ACTIVE STATE */}
                 {timerState === 'active' && (
                     <View className="flex-1 justify-center items-center px-8">
-                        <View className="items-center justify-center mb-16">
-                            <PulsingRing />
-                            <PulsingRing />
+                        {/* Timer centered */}
+                        <View className="items-center justify-center flex-1">
                             <Animated.View entering={FadeIn}>
-                                <Text className="text-white font-black text-6xl tracking-tight">
+                                <Text className="text-black font-black text-6xl tracking-tight">
                                     {formatTime(elapsedSeconds)}
                                 </Text>
                             </Animated.View>
+
+                            <View className="mt-12">
+                                <WorkoutSprite isActive={true} />
+                            </View>
                         </View>
 
                         {goal && (
-                            <View className="bg-white/5 rounded-xl px-4 py-2 mb-16">
-                                <Text className="text-gray-400 text-xs text-center" numberOfLines={1}>
+                            <View className="bg-gray-50 rounded-xl px-4 py-2 mb-8 border border-gray-100">
+                                <Text className="text-gray-500 text-xs text-center" numberOfLines={1}>
                                     {goal}
                                 </Text>
                             </View>
@@ -266,9 +240,9 @@ export default function FocusTimerScreen() {
 
                         <TouchableOpacity
                             onPress={handleEnd}
-                            className="bg-white px-12 py-5 rounded-full"
+                            className="bg-black px-12 py-5 rounded-full mb-8 shadow-lg"
                         >
-                            <Text className="text-black font-black tracking-widest">END SESSION</Text>
+                            <Text className="text-white font-black tracking-widest">END SESSION</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -278,7 +252,7 @@ export default function FocusTimerScreen() {
                     <View className="flex-1 px-6">
                         <Animated.View entering={FadeIn} className="flex-1 justify-center">
                             <ViewShot ref={shareCardRef} options={{ format: 'png', quality: 1 }}>
-                                <View className="bg-swiss-red rounded-3xl p-8 items-center">
+                                <View className="bg-swiss-red rounded-3xl p-8 items-center shadow-xl shadow-swiss-red/30">
                                     <Text className="text-white/60 font-bold text-xs tracking-[0.3em] mb-2">
                                         FOCUS SESSION
                                     </Text>
@@ -307,22 +281,22 @@ export default function FocusTimerScreen() {
                             <View className="flex-row gap-3 mb-4">
                                 <TouchableOpacity
                                     onPress={handleSave}
-                                    className="flex-1 bg-white/10 py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                    className="flex-1 bg-gray-100 py-4 rounded-xl items-center flex-row justify-center gap-2"
                                 >
-                                    <Ionicons name="download-outline" size={20} color="white" />
-                                    <Text className="text-white font-bold">SAVE</Text>
+                                    <Ionicons name="download-outline" size={20} color="black" />
+                                    <Text className="text-black font-bold">SAVE</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={handleShare}
-                                    className="flex-1 bg-white py-4 rounded-xl items-center flex-row justify-center gap-2"
+                                    className="flex-1 bg-black py-4 rounded-xl items-center flex-row justify-center gap-2"
                                 >
-                                    <Ionicons name="share-outline" size={20} color="black" />
-                                    <Text className="text-black font-bold">SHARE</Text>
+                                    <Ionicons name="share-outline" size={20} color="white" />
+                                    <Text className="text-white font-bold">SHARE</Text>
                                 </TouchableOpacity>
                             </View>
                             <TouchableOpacity
                                 onPress={handleNewSession}
-                                className="bg-swiss-red py-4 rounded-xl items-center"
+                                className="bg-swiss-red py-4 rounded-xl items-center shadow-lg shadow-swiss-red/20"
                             >
                                 <Text className="text-white font-black tracking-widest">NEW SESSION</Text>
                             </TouchableOpacity>

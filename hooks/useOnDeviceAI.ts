@@ -89,13 +89,13 @@ export function useOnDeviceAI() {
       const response = await generate(prompt);
       const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(jsonStr);
-    } catch (e) {
-      console.error("On-Device AI Error:", e);
+    } catch (e: any) {
+      console.warn("On-Device AI / Cloud Fallback Failed:", e.message);
       return {
         isDistraction: true,
         score: 0,
-        reasoning: "Analysis failed due to model error.",
-        advice: "Proceed with caution."
+        reasoning: "Analysis unavailable (Rate Limit/Offline). Defaulting to caution.",
+        advice: "Treat this as a distraction until you can verify connectivity or add an API key."
       };
     }
   };
