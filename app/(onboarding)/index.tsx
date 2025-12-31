@@ -36,7 +36,7 @@ export default function OnboardingScreen() {
       await AsyncStorage.setItem('mainGoal', data.goal);
       await AsyncStorage.setItem('motivation', data.motivation);
       await AsyncStorage.setItem('hasOnboarded', 'true');
-      
+
       // Small delay to let the animation finish
       setTimeout(() => {
         router.replace('/(tabs)');
@@ -50,8 +50,8 @@ export default function OnboardingScreen() {
     <SafeAreaView className="flex-1 bg-white">
       {/* Navigation Header */}
       <View className="flex-row justify-between items-center px-6 py-2 z-10">
-        <TouchableOpacity 
-          onPress={handleBack} 
+        <TouchableOpacity
+          onPress={handleBack}
           disabled={step === 0}
           className={`p-2 -ml-2 rounded-full active:bg-gray-100 ${step === 0 ? 'opacity-0' : 'opacity-100'}`}
         >
@@ -60,15 +60,14 @@ export default function OnboardingScreen() {
 
         <View className="flex-row gap-1.5 items-center">
           {[0, 1, 2, 3].map((i) => (
-            <View 
-              key={i} 
-              className={`h-1.5 rounded-full ${
-                i === step 
-                  ? 'w-8 bg-swiss-red' 
-                  : i < step 
-                    ? 'w-4 bg-black' 
+            <View
+              key={i}
+              className={`h-1.5 rounded-full ${i === step
+                  ? 'w-8 bg-swiss-red'
+                  : i < step
+                    ? 'w-4 bg-black'
                     : 'w-2 bg-gray-200'
-              }`} 
+                }`}
             />
           ))}
         </View>
@@ -79,9 +78,9 @@ export default function OnboardingScreen() {
         {step === 1 && <GoalInputStep onNext={(goal) => handleNext({ goal })} initialValue={data.goal} />}
         {step === 2 && <MotivationStep onNext={(motivation) => handleNext({ motivation })} initialValue={data.motivation} />}
         {step === 3 && (
-          <ContractStep 
-            goal={data.goal} 
-            motivation={data.motivation} 
+          <ContractStep
+            goal={data.goal}
+            motivation={data.motivation}
             onLockIn={handleLockIn}
             onEditGoal={() => handleEdit(1)}
             onEditMotivation={() => handleEdit(2)}

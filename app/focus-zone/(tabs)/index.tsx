@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useWarRoom } from '../_context';
+import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { TacticalCard } from '../../../components/war-room/TacticalCard';
@@ -83,13 +84,15 @@ export default function TacticalBoard() {
           <Text className="text-xs font-bold text-gray-400 tracking-widest mb-1">FOCUS HUB</Text>
           <Text className="text-2xl font-black">NEXT STEPS</Text>
         </View>
-        {!isReady ? (
-          <ActivityIndicator size="small" color="#CA8A04" />
-        ) : (
-          <View className="bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
-            <Text className="text-[10px] font-bold text-gray-600">SYSTEM ONLINE</Text>
+        {/* Dynamic Commander Sprite */}
+        <View className="scale-75 origin-right h-24 w-24 justify-center items-center">
+          <View className="absolute">
+            <ScannerSprite
+              state={isLoading ? 'ANALYZING' : selectedIds.size > 0 ? 'APPROVED' : 'IDLE'}
+              showLabels={false}
+            />
           </View>
-        )}
+        </View>
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 120 }}>

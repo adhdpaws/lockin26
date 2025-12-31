@@ -32,7 +32,7 @@ export function FocusLogSprite({ index }: { index: number }) {
     const sweatY = useSharedValue(0);
 
     const [isCaught, setIsCaught] = useState(false);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Main Peek Loop
     const startPeekLoop = useCallback(() => {
@@ -186,7 +186,6 @@ export function FocusLogSprite({ index }: { index: number }) {
                 {/* EEP Text (Visible when caught) */}
                 {isCaught && (
                     <Animated.View
-                        entering={runOnJS(() => 1) ? undefined : undefined}
                         className="absolute -top-9 bg-black px-3 py-1.5 rounded-lg shadow-sm z-50 items-center justify-center min-w-[50px]"
                     >
                         <Text className="text-[10px] font-black text-white" numberOfLines={1}>EEP!</Text>

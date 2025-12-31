@@ -230,12 +230,7 @@ export default function Dashboard() {
             >
               <Ionicons name="add" size={20} color="white" />
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/profile')}
-              className="bg-gray-50 rounded-full p-3"
-            >
-              <Ionicons name="settings-outline" size={20} color="black" />
-            </TouchableOpacity>
+
           </View>
         </View>
 

@@ -7,6 +7,7 @@ import { useOnDeviceAI } from '../../../hooks/useOnDeviceAI';
 import { Milestone } from '../../../types';
 import { CampaignTimelineCard } from '../../../components/war-room/CampaignTimelineCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -118,30 +119,37 @@ export default function FullCampaign() {
             <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 140 }}>
                 {phase === 'idle' && !hasGenerated ? (
                     // IDLE STATE - Hero Card
-                    <Animated.View entering={FadeIn} className="items-center pt-8">
-                        <View className="bg-swiss-red rounded-[32px] p-8 w-full mb-6 shadow-lg">
-                            <View className="flex-row justify-between items-start mb-6">
-                                <View className="bg-black/20 px-3 py-1 rounded-full">
-                                    <Text className="text-white font-bold text-[10px] tracking-widest">PRIORITY: HIGH</Text>
+                    <View className="items-center pt-8">
+                        <View className="bg-swiss-red rounded-[32px] p-6 w-full mb-6 shadow-lg">
+                            <View className="flex-row">
+                                {/* Left Content */}
+                                <View className="flex-1 mr-4">
+                                    <View className="bg-black/20 px-3 py-1 rounded-full self-start mb-4">
+                                        <Text className="text-white font-bold text-[10px] tracking-widest">PRIORITY: HIGH</Text>
+                                    </View>
+                                    <View>
+                                        <Text className="text-white/80 font-bold text-[10px] tracking-widest mb-1">FULL ROADMAP</Text>
+                                        <Text className="text-white font-black text-3xl leading-8 mb-2">
+                                            YEAR{'\n'}GOALS
+                                        </Text>
+                                        <Text className="text-white/90 font-medium text-xs leading-4">
+                                            AI maps every milestone from now to success.
+                                        </Text>
+                                    </View>
                                 </View>
-                                <View className="bg-white/20 p-2 rounded-full">
-                                    <Ionicons name="rocket" size={20} color="white" />
+
+                                {/* Right Sprite (Visionary) */}
+                                <View className="justify-center items-center">
+                                    <View className="scale-90 mt-4 mr-2">
+                                        <ScannerSprite state="IDLE" showLabels={false} />
+                                    </View>
                                 </View>
                             </View>
-
-                            <Text className="text-white/80 font-bold text-xs tracking-widest mb-2">FULL ROADMAP</Text>
-                            <Text className="text-white font-black text-3xl leading-9 mb-4">
-                                YEAR GOALS
-                            </Text>
-                            <Text className="text-white/90 font-medium text-sm leading-5 mb-8">
-                                One tap. Complete roadmap.{'\n'}
-                                AI maps every milestone from now to success.
-                            </Text>
 
                             <TouchableOpacity
                                 onPress={handleGenerate}
                                 disabled={!isReady}
-                                className={`py-4 rounded-xl items-center flex-row justify-center gap-2 ${isReady ? 'bg-white' : 'bg-white/50'}`}
+                                className={`py-4 mt-6 rounded-xl items-center flex-row justify-center gap-2 ${isReady ? 'bg-white' : 'bg-white/50'}`}
                             >
                                 {!isReady ? (
                                     <View className="flex-row items-center gap-2">
@@ -196,13 +204,18 @@ export default function FullCampaign() {
                                 </Text>
                             </View>
                         )}
-                    </Animated.View>
+                    </View>
                 ) : phase !== 'complete' ? (
                     // LOADING STATE
                     <View className="flex-1 items-center justify-center pt-20">
-                        <View className="w-20 h-20 rounded-full bg-red-50 border-2 border-red-100 items-center justify-center mb-6">
-                            <ActivityIndicator size="large" color="#EF4444" />
+                        {/* Character Expression */}
+                        <View className="scale-125 mb-10">
+                            <ScannerSprite
+                                state={phase === 'finalizing' ? 'APPROVED' : 'ANALYZING'}
+                                showLabels={false}
+                            />
                         </View>
+
                         <View className="flex-row items-center">
                             <Text className="text-black font-black text-lg tracking-widest">
                                 {phaseMessages[phase]}
@@ -210,20 +223,25 @@ export default function FullCampaign() {
                             <PulsingDots />
                         </View>
                         <Text className="text-gray-400 text-xs mt-2 tracking-widest">
-                            STAND BY FOR BRIEFING
+                            {phase === 'finalizing' ? 'MISSION LOCK IN DETECTED' : 'STAND BY FOR BRIEFING'}
                         </Text>
                     </View>
                 ) : (
                     // RESULT STATE - Timeline Preview
-                    <Animated.View entering={FadeIn}>
+                    <View>
                         {/* Summary Header */}
                         <View className="bg-white rounded-2xl p-5 mb-6 border border-gray-100">
                             <View className="flex-row justify-between items-center mb-4">
-                                <Text className="font-black text-lg">ROADMAP OVERVIEW</Text>
-                                <View className="bg-swiss-red px-3 py-1 rounded-full">
-                                    <Text className="text-white text-xs font-black">
-                                        {generatedMilestones.length} MISSIONS
-                                    </Text>
+                                <View>
+                                    <Text className="font-black text-lg">ROADMAP OVERVIEW</Text>
+                                    <View className="bg-swiss-red px-3 py-1 rounded-full self-start mt-1">
+                                        <Text className="text-white text-xs font-black">
+                                            {generatedMilestones.length} MISSIONS
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View className="scale-75">
+                                    <ScannerSprite state="APPROVED" showLabels={false} />
                                 </View>
                             </View>
 
@@ -258,7 +276,7 @@ export default function FullCampaign() {
                                 total={generatedMilestones.length}
                             />
                         ))}
-                    </Animated.View>
+                    </View>
                 )}
             </ScrollView>
 

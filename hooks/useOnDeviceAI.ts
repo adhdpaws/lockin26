@@ -4,6 +4,26 @@ import { LockedGoal, ChatMessage, StrategyResponse, ShinyObjectAnalysis, Milesto
 export function useOnDeviceAI() {
   const { generate, isReady, modelStatus, initialize, aiProvider } = useAI();
 
+  // Helper to safely parse AI JSON response
+  const parseAIResponse = (response: string) => {
+    try {
+      // 1. Try generic cleanup first
+      const clean = response.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(clean);
+    } catch (e) {
+      // 2. If valid JSON fails, try to find the {...} or [...] block
+      const jsonMatch = response.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          throw new Error("Regex extracted invalid JSON: " + jsonMatch[0]);
+        }
+      }
+      throw e; // Rethrow original if regex fails
+    }
+  };
+
   const getStrategyResponse = async (goal: LockedGoal, history: ChatMessage[]): Promise<StrategyResponse> => {
     if (!isReady) {
       await initialize();
@@ -273,8 +293,7 @@ If starting fresh, progressAnalysis should state "Starting from scratch."
 Return ONLY the JSON object. No markdown, no explanation.`;
 
       const phasesResponse = await generate(analysisPrompt);
-      const phasesJsonStr = phasesResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-      const analysisResult = JSON.parse(phasesJsonStr);
+      const analysisResult = parseAIResponse(phasesResponse);
       const remainingPhases: string[] = analysisResult.remainingPhases || [];
 
       if (remainingPhases.length === 0) {
@@ -350,8 +369,7 @@ RULES:
 Return ONLY the JSON array. No markdown, no explanation.`;
 
       const milestonesResponse = await generate(milestonesPrompt);
-      const milestonesJsonStr = milestonesResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-      const rawMilestones = JSON.parse(milestonesJsonStr);
+      const rawMilestones = parseAIResponse(milestonesResponse);
 
       // Start ordering after existing milestones
       const startOrder = existingMilestones.length;

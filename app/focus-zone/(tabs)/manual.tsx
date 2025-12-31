@@ -5,6 +5,7 @@ import { format, subHours } from 'date-fns';
 import { useWarRoom } from '../_context';
 import { Milestone } from '../../../types';
 import { schedulePushNotification, scheduleNotificationAtDate } from '../../../services/notifications';
+import { ScannerSprite } from '../../../components/dashboard/ScannerSprite';
 
 export default function ManualEntry() {
     const { draftStack, setDraftStack } = useWarRoom();
@@ -70,8 +71,24 @@ export default function ManualEntry() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             className="flex-1 bg-white"
         >
-            <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 40 }}>
-                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MANUAL INPUT</Text>
+            <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 140 }}>
+                {/* Builder Sprite Header */}
+                <View className="flex-row justify-between items-center mb-6">
+                    <View>
+                        <Text className="text-2xl font-black">MANUAL INPUT</Text>
+                        <Text className="text-xs font-bold text-gray-400 tracking-widest">BUILD YOUR PLAN</Text>
+                    </View>
+                    <View className="scale-75 origin-right h-24 w-24 justify-center items-center">
+                        <View className="absolute">
+                            <ScannerSprite
+                                state={manualTitle.length > 5 ? 'APPROVED' : manualTitle.length > 0 ? 'ANALYZING' : 'IDLE'}
+                                showLabels={false}
+                            />
+                        </View>
+                    </View>
+                </View>
+
+                <Text className="text-xs font-bold text-gray-400 mb-2 tracking-widest">MISSION TITLE</Text>
                 <TextInput
                     className="bg-gray-50 p-4 rounded-xl font-bold text-lg mb-6"
                     placeholder="e.g. Launch MVP"
@@ -100,13 +117,15 @@ export default function ManualEntry() {
                 </TouchableOpacity>
 
                 {showDatePicker && (
-                    <DateTimePicker
-                        value={manualDeadline}
-                        mode="date"
-                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                        onChange={onDateChange}
-                        minimumDate={new Date()}
-                    />
+                    <View className="w-full items-center justify-center">
+                        <DateTimePicker
+                            value={manualDeadline}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={onDateChange}
+                            minimumDate={new Date()}
+                        />
+                    </View>
                 )}
 
                 {Platform.OS === 'ios' && showDatePicker && (
@@ -136,7 +155,10 @@ export default function ManualEntry() {
                         </TouchableOpacity>
                     ))}
                 </View>
+            </ScrollView>
 
+            {/* Fixed Bottom Button */}
+            <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100" style={{ paddingBottom: 40 }}>
                 <TouchableOpacity
                     onPress={handleManualSubmit}
                     disabled={!manualTitle.trim()}
@@ -145,7 +167,7 @@ export default function ManualEntry() {
                 >
                     <Text className="text-white font-bold tracking-widest">ADD TO FOCUS ZONE</Text>
                 </TouchableOpacity>
-            </ScrollView>
+            </View>
         </KeyboardAvoidingView>
     );
 }

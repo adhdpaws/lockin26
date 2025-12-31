@@ -14,6 +14,11 @@ registerBackgroundHandler();
 
 SplashScreen.preventAutoHideAsync();
 
+import { AnimatedSplashScreen } from '../components/AnimatedSplashScreen';
+import { useState } from 'react';
+
+// ... imports
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     Inter_400Regular,
@@ -21,18 +26,30 @@ export default function RootLayout() {
     Inter_900Black,
   });
 
+  const [splashAnimationFinished, setSplashAnimationFinished] = useState(false);
+
   useEffect(() => {
     registerForPushNotificationsAsync();
   }, []);
 
   useEffect(() => {
     if (loaded || error) {
+      // Hide the native splash screen as soon as fonts are loaded
+      // so we can show our custom animated one.
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
 
   if (!loaded && !error) {
-    return <View />;
+    return null;
+  }
+
+  if (!splashAnimationFinished) {
+    return (
+      <AnimatedSplashScreen
+        onFinish={() => setSplashAnimationFinished(true)}
+      />
+    );
   }
 
   return (

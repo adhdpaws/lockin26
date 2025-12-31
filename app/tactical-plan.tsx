@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Milestone, Todo } from '../types';
-import { ExecutionSprite } from '../components/dashboard/ExecutionSprite';
+import { BoatingSprite } from '../components/dashboard/BoatingSprite';
 
 export default function TacticalPlanScreen() {
   const router = useRouter();
@@ -125,7 +125,7 @@ export default function TacticalPlanScreen() {
         </Text>
       </View>
 
-      <ScrollView className="flex-1 p-6">
+      <ScrollView className="flex-1 p-6" contentContainerStyle={{ paddingBottom: 160 }}>
         {milestone.todos?.map((todo) => (
           <View
             key={todo.id}
@@ -200,12 +200,13 @@ export default function TacticalPlanScreen() {
             </TouchableOpacity>
           )}
         </View>
-        {/* The Supervisor at the bottom */}
-        <View className="items-center pb-12">
-          <ExecutionSprite />
-        </View>
 
       </ScrollView>
+
+      {/* The Supervisor at the bottom */}
+      <View className="absolute bottom-0 left-0 right-0 items-center">
+        <BoatingSprite />
+      </View>
     </KeyboardAvoidingView>
   );
 }

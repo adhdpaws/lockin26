@@ -2,16 +2,13 @@ import { View } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSequence,
-    withTiming,
     withSpring,
-    withRepeat,
-    SharedValue,
     interpolate,
-    Extrapolate
+    Extrapolate,
+    useDerivedValue,
+    SharedValue
 } from 'react-native-reanimated';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { useEffect } from 'react';
+import Svg, { Path, Circle, Ellipse } from 'react-native-svg';
 
 export type SpriteMood = 'IDLE' | 'HAPPY' | 'SCARED' | 'DIZZY';
 
@@ -25,23 +22,20 @@ interface JourneySpriteProps {
 }
 
 export function JourneySprite({ x, y, r, vx, vy, mood }: JourneySpriteProps) {
-    const rotate = useSharedValue(0);
+    // Smoother rotation based on horizontal velocity (Lean into movement)
+    const rotation = useDerivedValue(() => {
+        // Lean forward/backward based on X velocity
+        // Max lean of 25 degrees at speed 600
+        return interpolate(vx.value, [-600, 600], [25, -25], Extrapolate.CLAMP);
+    });
 
-    // Tumble effect based on movement
     const animatedStyle = useAnimatedStyle(() => {
-        // Calculate rotation based on velocity direction
-        const speed = Math.sqrt(vx.value ** 2 + vy.value ** 2);
-        const targetRotation = Math.atan2(vy.value, vx.value) * (180 / Math.PI);
-
-        // If moving fast, rotate towards direction. If slow, tumble gently.
-        // Actually, for zero-G, it's fun if it spins when hit.
-        // Let's just standard rotation + simple transforms.
-
         return {
             transform: [
                 { translateX: x.value - r.value },
                 { translateY: y.value - r.value },
-                { rotate: `${targetRotation + 90}deg` } // Upright relative to movement
+                // Use spring for smooth tilting
+                { rotate: `${rotation.value}deg` }
             ],
             width: r.value * 2,
             height: r.value * 2,
@@ -49,104 +43,121 @@ export function JourneySprite({ x, y, r, vx, vy, mood }: JourneySpriteProps) {
     });
 
     const eyesStyle = useAnimatedStyle(() => {
+        // Dramatic eye tracking or shake
         const speed = Math.sqrt(vx.value ** 2 + vy.value ** 2);
-        // Eyes shake if very fast
-        const shake = speed > 300 ? Math.sin(Date.now() / 50) * 2 : 0;
+
+        // Shake only when SCARED or DIZZY or very fast
+        const shouldShake = speed > 500 || mood.value === 'SCARED' || mood.value === 'DIZZY';
+        const shakeX = shouldShake ? Math.sin(Date.now() / 30) * 3 : 0;
+        const shakeY = shouldShake ? Math.cos(Date.now() / 30) * 3 : 0;
+
+        // Look in direction of movement (subtle)
+        const lookX = interpolate(vx.value, [-500, 500], [-4, 4], Extrapolate.CLAMP);
+        const lookY = interpolate(vy.value, [-500, 500], [-3, 3], Extrapolate.CLAMP);
 
         return {
-            transform: [{ translateX: shake }]
-        };
+            transform: [
+                { translateX: lookX + shakeX },
+                { translateY: lookY + shakeY }
+            ]
+        } as any;
     });
 
     return (
         <Animated.View style={[animatedStyle, { position: 'absolute', justifyContent: 'center', alignItems: 'center' }]}>
-            {/* The Body */}
-            <View className="w-full h-full bg-black rounded-full items-center justify-center shadow-lg">
-                {/* Eyes Container */}
+            {/* The Body - Shadow for depth */}
+            <View
+                className="w-full h-full bg-black rounded-full items-center justify-center"
+                style={{
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 5,
+                    elevation: 10
+                }}
+            >
+                {/* Eyes Container - Centered but moves */}
                 <Animated.View style={eyesStyle}>
                     <SpriteFace mood={mood} />
                 </Animated.View>
             </View>
 
-            {/* Glass Helmet Reflection (Subtle) */}
-            <View className="absolute top-1 right-2 w-3 h-3 bg-white/20 rounded-full" />
+            {/* Glossy Highlight for 3D effect (Fixed at top-right relative to ball) */}
+            <View className="absolute top-[15%] right-[15%] w-[25%] h-[25%] bg-white/10 rounded-full" />
+            <View className="absolute top-[20%] right-[20%] w-[10%] h-[10%] bg-white/30 rounded-full" />
         </Animated.View>
     );
 }
 
 function SpriteFace({ mood }: { mood: SharedValue<SpriteMood> }) {
-    // We render different SVGs based on mood
-    // Note: Reanimated conditional rendering can be tricky if not careful, 
-    // but we can assume mood changes are infrequent enough or handled via swapping opacities.
-    // For simplicity/performance in this frame-loop driven world, we might use style opacity.
-
-    // Actually, passing SharedValue directly to React render logic isn't reactive without useDerivedValue or similar.
-    // BUT, we can just use a derived component or standard reactive update if we pass it as a prop that triggers re-render?
-    // No, `PhysicsWorld` updates are on the UI thread. Re-renders are expensive.
-    // We should use Animated Styles to show/hide faces.
-
     const idleOpacity = useAnimatedStyle(() => ({ opacity: mood.value === 'IDLE' ? 1 : 0 }));
     const happyOpacity = useAnimatedStyle(() => ({ opacity: mood.value === 'HAPPY' ? 1 : 0 }));
     const scaredOpacity = useAnimatedStyle(() => ({ opacity: mood.value === 'SCARED' ? 1 : 0 }));
     const dizzyOpacity = useAnimatedStyle(() => ({ opacity: mood.value === 'DIZZY' ? 1 : 0 }));
 
     return (
-        <View className="items-center justify-center w-full h-full">
-            {/* IDLE */}
+        <View className="items-center justify-center">
+            {/* IDLE - Big Cute Eyes */}
             <Animated.View style={[idleOpacity, { position: 'absolute' }]} className="items-center gap-1">
-                <View className="flex-row gap-1.5">
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
-                    <View className="w-1.5 h-1.5 bg-white rounded-full" />
+                <View className="flex-row gap-2">
+                    {/* Left Eye */}
+                    <View className="w-3.5 h-3.5 bg-white rounded-full justify-center items-center">
+                        <View className="w-1.5 h-1.5 bg-black rounded-full ml-1" />
+                    </View>
+                    {/* Right Eye */}
+                    <View className="w-3.5 h-3.5 bg-white rounded-full justify-center items-center">
+                        <View className="w-1.5 h-1.5 bg-black rounded-full ml-1" />
+                    </View>
                 </View>
-                {/* Tiny Smile */}
-                <Svg width="6" height="3" viewBox="0 0 6 3">
-                    <Path d="M1 1 Q 3 3 5 1" stroke="white" strokeWidth="1" fill="none" />
+                {/* Small Smile */}
+                <Svg width="12" height="6" viewBox="0 0 12 6">
+                    <Path d="M2 1 Q 6 5 10 1" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" />
                 </Svg>
             </Animated.View>
 
-            {/* HAPPY (^ ^) with Mouth */}
-            <Animated.View style={[happyOpacity, { position: 'absolute' }]} className="items-center gap-0.5">
-                <View className="flex-row gap-1">
-                    <Svg width="8" height="6" viewBox="0 0 10 10" fill="none">
-                        <Path d="M1 6 Q 3 2 5 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            {/* HAPPY - Excited Eyes & Big Grin */}
+            <Animated.View style={[happyOpacity, { position: 'absolute' }]} className="items-center gap-1">
+                <View className="flex-row gap-2">
+                    {/* Smiling Eyes (U shape) */}
+                    <Svg width="14" height="8" viewBox="0 0 14 8">
+                        <Path d="M1 1 Q 7 8 13 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
                     </Svg>
-                    <Svg width="8" height="6" viewBox="0 0 10 10" fill="none">
-                        <Path d="M1 6 Q 3 2 5 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                    <Svg width="14" height="8" viewBox="0 0 14 8">
+                        <Path d="M1 1 Q 7 8 13 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
                     </Svg>
                 </View>
-                {/* Big Grin */}
-                <Svg width="10" height="6" viewBox="0 0 10 6">
-                    <Path d="M1 1 Q 5 7 9 1" stroke="white" strokeWidth="1.5" fill="none" />
+                {/* Big Filled Smile */}
+                <Svg width="16" height="10" viewBox="0 0 16 10">
+                    <Path d="M1 1 Q 8 12 15 1 Z" fill="white" />
                 </Svg>
             </Animated.View>
 
-            {/* SCARED (O O) with Open Mouth */}
+            {/* SCARED - Wide Eyes & O Mouth */}
             <Animated.View style={[scaredOpacity, { position: 'absolute' }]} className="items-center gap-1">
                 <View className="flex-row gap-1">
-                    <View className="w-2 h-2 bg-white rounded-full items-center justify-center">
-                        <View className="w-0.5 h-0.5 bg-black rounded-full" />
+                    <View className="w-4 h-4 bg-white rounded-full items-center justify-center">
+                        <View className="w-1 h-1 bg-black rounded-full" />
                     </View>
-                    <View className="w-2 h-2 bg-white rounded-full items-center justify-center">
-                        <View className="w-0.5 h-0.5 bg-black rounded-full" />
+                    <View className="w-4 h-4 bg-white rounded-full items-center justify-center">
+                        <View className="w-1 h-1 bg-black rounded-full" />
                     </View>
                 </View>
-                {/* O Mouth */}
-                <View className="w-2 h-3 bg-white rounded-full" />
+                {/* Scream Mouth */}
+                <View className="w-3 h-5 bg-white rounded-full border-2 border-white" />
             </Animated.View>
 
-            {/* DIZZY (X X) with Wavy Mouth */}
-            <Animated.View style={[dizzyOpacity, { position: 'absolute' }]} className="items-center gap-1">
-                <View className="flex-row gap-1">
-                    <Svg width="8" height="8" viewBox="0 0 8 8">
-                        <Path d="M2 2 L 6 6 M 6 2 L 2 6" stroke="white" strokeWidth="1.5" />
+            {/* DIZZY - X Eyes & Wavy Mouth */}
+            <Animated.View style={[dizzyOpacity, { position: 'absolute' }]} className="items-center gap-2">
+                <View className="flex-row gap-2">
+                    <Svg width="12" height="12" viewBox="0 0 12 12">
+                        <Path d="M2 2 L 10 10 M 10 2 L 2 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                     </Svg>
-                    <Svg width="8" height="8" viewBox="0 0 8 8">
-                        <Path d="M2 2 L 6 6 M 6 2 L 2 6" stroke="white" strokeWidth="1.5" />
+                    <Svg width="12" height="12" viewBox="0 0 12 12">
+                        <Path d="M2 2 L 10 10 M 10 2 L 2 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                     </Svg>
                 </View>
-                {/* Wavy Mouth */}
-                <Svg width="10" height="4" viewBox="0 0 10 4">
-                    <Path d="M0 2 Q 2.5 0 5 2 T 10 2" stroke="white" strokeWidth="1" fill="none" />
+                <Svg width="16" height="6" viewBox="0 0 16 6">
+                    <Path d="M1 3 Q 4 0 8 3 T 15 3" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" />
                 </Svg>
             </Animated.View>
         </View>

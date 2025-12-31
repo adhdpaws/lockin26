@@ -98,6 +98,8 @@ export default function Journey() {
   const [resetTrigger, setResetTrigger] = useState(0);
   const [showConcept, setShowConcept] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [isSensorAvailable, setIsSensorAvailable] = useState(false);
+  const [driftMode, setDriftMode] = useState(true); // Default to drift, disable if sensors found
   const gravity = useSharedValue({ x: 0, y: 0 });
 
   useFocusEffect(
@@ -108,9 +110,18 @@ export default function Journey() {
   );
 
   useEffect(() => {
+    async function checkSensors() {
+      const available = await Accelerometer.isAvailableAsync();
+      setIsSensorAvailable(available);
+      setDriftMode(!available); // If no sensors, force drift
+    }
+    checkSensors();
+  }, []);
+
+  useEffect(() => {
     loadData();
 
-    if (!isActive) return;
+    if (!isActive || driftMode || !isSensorAvailable) return;
 
     const subscription = Accelerometer.addListener(data => {
       // Adjust gravity mapping for better feel
@@ -124,7 +135,7 @@ export default function Journey() {
     Accelerometer.setUpdateInterval(16);
 
     return () => subscription.remove();
-  }, [isActive]);
+  }, [isActive, driftMode, isSensorAvailable]);
 
   const loadData = async () => {
     const savedStack = await AsyncStorage.getItem('milestoneStack');
@@ -180,6 +191,16 @@ export default function Journey() {
 
       {showControls && (
         <View className="px-6 py-4 bg-gray-50 border-b border-gray-200 z-40">
+          <View className="mb-4 flex-row justify-between items-center">
+            <Text className="text-xs font-bold text-gray-500">DRIFT MODE (NO SENSORS)</Text>
+            <TouchableOpacity
+              onPress={() => setDriftMode(!driftMode)}
+              className={`w-12 h-6 rounded-full items-center px-1 flex-row ${driftMode ? 'bg-swiss-red justify-end' : 'bg-gray-300 justify-start'}`}
+            >
+              <View className="w-4 h-4 rounded-full bg-white shadow-sm" />
+            </TouchableOpacity>
+          </View>
+
           <View className="mb-4">
             <Text className="text-xs font-bold text-gray-500 mb-2">DAMPING (BOUNCE): {damping.toFixed(2)}</Text>
             <Slider
@@ -229,6 +250,7 @@ export default function Journey() {
             milestones={milestones}
             goalTitle={goalTitle}
             gravity={gravity}
+            driftMode={driftMode}
             worldHeight={worldHeight}
             soundEnabled={soundEnabled}
             damping={damping}
@@ -260,12 +282,13 @@ export default function Journey() {
   );
 }
 
-function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnabled, damping, stiffness, isActive, onGoalPop, onAbsorption }: { milestones: Milestone[], goalTitle: string, gravity: SharedValue<{ x: number, y: number }>, worldHeight: number, soundEnabled: boolean, damping: number, stiffness: number, isActive: boolean, onGoalPop: () => void, onAbsorption: () => void }) {
+function PhysicsWorld({ milestones, goalTitle, gravity, driftMode, worldHeight, soundEnabled, damping, stiffness, isActive, onGoalPop, onAbsorption }: { milestones: Milestone[], goalTitle: string, gravity: SharedValue<{ x: number, y: number }>, driftMode: boolean, worldHeight: number, soundEnabled: boolean, damping: number, stiffness: number, isActive: boolean, onGoalPop: () => void, onAbsorption: () => void }) {
   const heightSV = useSharedValue(worldHeight);
   const soundEnabledSV = useSharedValue(soundEnabled);
   const dampingSV = useSharedValue(damping);
   const stiffnessSV = useSharedValue(stiffness);
   const isActiveSV = useSharedValue(isActive);
+  const driftModeSV = useSharedValue(driftMode);
   const soundRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
@@ -275,6 +298,10 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
   useEffect(() => {
     isActiveSV.value = isActive;
   }, [isActive]);
+
+  useEffect(() => {
+    driftModeSV.value = driftMode;
+  }, [driftMode]);
 
   useEffect(() => {
     soundEnabledSV.value = soundEnabled;
@@ -332,20 +359,76 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
     doomed: useSharedValue(0),
     deathTimer: useSharedValue(0),
     mood: useSharedValue<SpriteMood>('IDLE'),
-    moodTimer: useSharedValue(0)
+    moodTimer: useSharedValue(0),
+    // Drift specific: Per-object random noise offset
+    driftOffsetX: useSharedValue(Math.random() * 100),
+    driftOffsetY: useSharedValue(Math.random() * 100)
   }));
 
   useFrameCallback((frameInfo) => {
     if (!frameInfo.timeSincePreviousFrame || !isActiveSV.value) return;
     const dt = Math.min(frameInfo.timeSincePreviousFrame / 1000, 0.05); // Cap dt to prevent tunneling
 
-    const gx = gravity.value.x * SENSITIVITY;
-    const gy = gravity.value.y * SENSITIVITY;
+    let gx = 0;
+    let gy = 0;
+
+    if (!driftModeSV.value) {
+      gx = gravity.value.x * SENSITIVITY;
+      gy = gravity.value.y * SENSITIVITY;
+    }
 
     // Update Physics
     for (let i = 0; i < positions.length; i++) {
       const p = positions[i];
       if (p.active.value === 0) continue;
+
+      if (driftModeSV.value) {
+        // --- DRIFT PHYSICS ---
+        // Apply random wandering force
+        // We can simulate Brownian motion by adding small random impulses to velocity
+        // Drift Physics v2: "Floaty & Chaotic"
+        const driftForce = 400;
+
+        // Update noise offsets
+        p.driftOffsetX.value += dt;
+        p.driftOffsetY.value += dt;
+
+        // Random noise vectors (-1 to 1)
+        const randX = Math.sin(p.driftOffsetX.value * 2 + i) + Math.cos(p.driftOffsetY.value * 3);
+        const randY = Math.cos(p.driftOffsetX.value * 3 - i) + Math.sin(p.driftOffsetY.value * 2);
+
+        // Centering force (Horizontal only) to prevent flying off-screen too much
+        const centerX = SCREEN_WIDTH / 2;
+        const distX = (centerX - p.x.value);
+        const centeringStrength = 0.3; // Weaker centering
+
+        // Vertical Dynamics:
+        // 1. Base Gravity (Light downward pull)
+        const baseGravity = 40;
+
+        // 2. "Wind Cycles" (Updrafts and Downdrafts)
+        // Uses a slower Sine wave to create long periods of rising/falling
+        const turbulenceY = Math.sin(p.driftOffsetY.value * 0.5) * 350;
+
+        // Apply Forces
+        p.vx.value += (randX * driftForce + distX * centeringStrength) * dt;
+        // randY gives high freq jitter, turbulenceY gives low freq "currents", baseGravity settles them
+        p.vy.value += (randY * driftForce + baseGravity + turbulenceY) * dt;
+
+        // Add some damping for drift mode so they don't accelerate infinitely
+        p.vx.value *= 0.95;
+        p.vy.value *= 0.95;
+
+      } else {
+        // --- SENSOR GRAVITY PHYSICS ---
+        // Apply forces
+        p.vx.value += gx * dt;
+        p.vy.value += gy * dt;
+
+        // Apply friction
+        p.vx.value *= FRICTION;
+        p.vy.value *= FRICTION;
+      }
 
       // --- SPRITE MOOD LOGIC (p is the Sprite?) ---
       // items[1] is the sprite.
@@ -403,14 +486,6 @@ function PhysicsWorld({ milestones, goalTitle, gravity, worldHeight, soundEnable
           }
         }
       }
-
-      // Apply forces
-      p.vx.value += gx * dt;
-      p.vy.value += gy * dt;
-
-      // Apply friction
-      p.vx.value *= FRICTION;
-      p.vy.value *= FRICTION;
 
       // Update position
       p.x.value += p.vx.value * dt;

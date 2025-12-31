@@ -1,7 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useState, useCallback, useRef } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { View, Text, ScrollView, TouchableOpacity, AppState, AppStateStatus } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,23 +20,35 @@ export default function WarPathScreen() {
     const [shareData, setShareData] = useState<{ milestone: Milestone, index: number } | null>(null);
 
     // Load data
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const savedStack = await AsyncStorage.getItem('milestoneStack');
             if (savedStack) {
-                setMilestones(JSON.parse(savedStack));
+                const parsed = JSON.parse(savedStack);
+                // Validate data - ensure each milestone has required fields
+                const validMilestones = Array.isArray(parsed)
+                    ? parsed.filter((m: any) =>
+                        m &&
+                        typeof m.id === 'string' &&
+                        typeof m.title === 'string' &&
+                        typeof m.order === 'number'
+                    )
+                    : [];
+                setMilestones(validMilestones);
             }
         } catch (e) {
             console.error('Failed to load focus path', e);
+            setMilestones([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
+    // Use useFocusEffect from expo-router to reload when screen is focused
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [])
+        }, [loadData])
     );
 
     const handleShare = async (milestone: Milestone, index: number) => {
@@ -69,7 +80,10 @@ export default function WarPathScreen() {
         }
     };
 
-    const sortedMilestones = [...milestones].sort((a, b) => a.order - b.order);
+    // Filter and sort milestones safely
+    const sortedMilestones = [...milestones]
+        .filter(m => m && typeof m.order === 'number')
+        .sort((a, b) => a.order - b.order);
     const completedCount = sortedMilestones.filter(m => m.status === 'COMPLETED').length;
     const totalCount = sortedMilestones.length;
     const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
@@ -84,7 +98,9 @@ export default function WarPathScreen() {
                 <View className="items-center">
                     <Text className="font-black text-lg tracking-tight">FOCUS LOG</Text>
                 </View>
-                <View style={{ width: 40 }} />
+                <TouchableOpacity onPress={() => router.push('/edit-focus-plan')} className="p-2 -mr-2">
+                    <Text className="font-bold text-xs text-swiss-red tracking-widest">EDIT</Text>
+                </TouchableOpacity>
             </View>
 
             <ScrollView className="flex-1" contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
@@ -118,12 +134,12 @@ export default function WarPathScreen() {
                         const isCompleted = milestone.status === 'COMPLETED';
 
                         return (
-                            <View key={milestone.id} className="flex-row gap-6 mb-2">
+                            <View key={`${milestone.id}-${milestone.order}`} className="flex-row gap-6 mb-2">
                                 {/* Timeline Spine */}
                                 <View className="items-center">
                                     {/* Node */}
                                     {isActive ? (
-                                        <FocusLogSprite index={index} />
+                                        <FocusLogSprite key={`sprite-${milestone.id}-${milestone.order}`} index={index} />
                                     ) : (
                                         <View className={`w-8 h-8 rounded-full items-center justify-center border-2 z-10 ${isCompleted ? 'bg-swiss-red border-swiss-red' : 'bg-white border-gray-200'
                                             }`}>
@@ -212,7 +228,7 @@ export default function WarPathScreen() {
                 </View>
 
                 {/* Main Content */}
-                <View className="mt-8">
+                <View className="flex-1 justify-center my-4">
                     <View className="flex-row items-center gap-2 mb-4">
                         <Ionicons name="trophy" size={24} color="rgba(255,255,255,0.8)" />
                         <Text className="text-white/80 font-bold text-sm tracking-widest uppercase">
@@ -221,24 +237,24 @@ export default function WarPathScreen() {
                     </View>
 
                     <Text
-                        className="text-white font-black text-6xl leading-[60px] tracking-tight mb-8"
+                        className="text-white font-black text-5xl leading-[50px] tracking-tight mb-8"
                         adjustsFontSizeToFit
-                        numberOfLines={3}
+                        numberOfLines={4}
                     >
-                        {shareData?.milestone.title.toUpperCase()}
+                        {shareData?.milestone.title.toUpperCase() || ''}
                     </Text>
 
                     <View className="h-1 w-20 bg-white/30 rounded-full mb-6" />
 
                     <View className="self-start bg-white/20 px-5 py-3 rounded-xl border border-white/10">
                         <Text className="text-white font-bold text-sm tracking-widest uppercase">
-                            {shareData?.milestone.deadline}
+                            {shareData?.milestone.deadline || ''}
                         </Text>
                     </View>
                 </View>
 
                 {/* Footer Section */}
-                <View className="pt-8 flex-row justify-between items-end">
+                <View className="flex-row justify-between items-end">
                     <View>
                         <Text className="text-white/60 text-[10px] font-bold tracking-[0.4em] mb-2 uppercase">DEPLOYED VIA</Text>
                         <Text className="text-white font-black text-2xl tracking-tighter">LOCKIN 2026</Text>
